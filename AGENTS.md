@@ -37,13 +37,13 @@ src/
 ## Import Order
 
 ```typescript
-import fs from 'node:fs'                           // 1. Node built-ins
-import { useState } from 'react'                   // 2. React
-import { createFileRoute } from '@tanstack/react-router'  // 3. TanStack
-import { someLib } from 'third-party'              // 4. Third-party
-import { getData } from '@/data/utils'             // 5. Path alias (@/)
-import Header from '../components/Header'          // 6. Relative imports
-import './styles.css'                              // 7. CSS (last)
+import fs from 'node:fs' // 1. Node built-ins
+import { useState } from 'react' // 2. React
+import { createFileRoute } from '@tanstack/react-router' // 3. TanStack
+import { someLib } from 'third-party' // 4. Third-party
+import { getData } from '@/data/utils' // 5. Path alias (@/)
+import Header from '../components/Header' // 6. Relative imports
+import './styles.css' // 7. CSS (last)
 ```
 
 **Path Alias**: Use `@/` for src-relative imports: `import { x } from '@/data/file'`
@@ -88,8 +88,7 @@ function RouteComponent() {
 ```typescript
 import { createServerFn } from '@tanstack/react-start'
 
-const getData = createServerFn({ method: 'GET' })
-  .handler(async () => await fetchFromDB())
+const getData = createServerFn({ method: 'GET' }).handler(async () => await fetchFromDB())
 
 const createItem = createServerFn({ method: 'POST' })
   .inputValidator((data: CreateItemInput) => data)
@@ -113,14 +112,14 @@ export const Route = createFileRoute('/api/endpoint')({
 
 ## Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | PascalCase | `Header`, `TodoList` |
-| Functions/Variables | camelCase | `getTodos`, `isLoading` |
-| CSS classes | kebab-case | `nav-item`, `App-header` |
-| Component files | PascalCase.tsx | `Header.tsx` |
-| Route files | kebab-case.tsx | `start.server-funcs.tsx` |
-| Data/util files | kebab-case.ts | `demo.punk-songs.ts` |
+| Type                | Convention     | Example                  |
+| ------------------- | -------------- | ------------------------ |
+| Components          | PascalCase     | `Header`, `TodoList`     |
+| Functions/Variables | camelCase      | `getTodos`, `isLoading`  |
+| CSS classes         | kebab-case     | `nav-item`, `App-header` |
+| Component files     | PascalCase.tsx | `Header.tsx`             |
+| Route files         | kebab-case.tsx | `start.server-funcs.tsx` |
+| Data/util files     | kebab-case.ts  | `demo.punk-songs.ts`     |
 
 ## CSS Styling
 
@@ -129,7 +128,11 @@ export const Route = createFileRoute('/api/endpoint')({
 - Use rem units, semantic class names
 
 ```css
-.header { padding: 0.5rem; display: flex; gap: 0.5rem; }
+.header {
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
 ```
 
 ## Error Handling
@@ -137,9 +140,7 @@ export const Route = createFileRoute('/api/endpoint')({
 ```typescript
 // Provide fallbacks for async operations
 async function readData() {
-  return JSON.parse(
-    await fs.promises.readFile(FILE, 'utf-8').catch(() => '[]')
-  )
+  return JSON.parse(await fs.promises.readFile(FILE, 'utf-8').catch(() => '[]'))
 }
 ```
 

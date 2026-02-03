@@ -61,7 +61,7 @@ function Home() {
     todos = await addTodo({ data: todo })
     setTodo('')
     router.invalidate()
-  }, [addTodo, todo])
+  }, [router, todo, todos])
 
   return (
     <div>
@@ -71,9 +71,9 @@ function Home() {
           <li key={t.id}>{t.name}</li>
         ))}
       </ul>
-      <div className="flex flex-col gap-2">
+      <div className='flex flex-col gap-2'>
         <input
-          type="text"
+          type='text'
           value={todo}
           onChange={(e) => setTodo(e.target.value)}
           onKeyDown={(e) => {
@@ -81,7 +81,7 @@ function Home() {
               submitTodo()
             }
           }}
-          placeholder="Enter a new todo..."
+          placeholder='Enter a new todo...'
         />
         <button disabled={todo.trim().length === 0} onClick={submitTodo}>
           Add todo

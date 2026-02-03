@@ -19,8 +19,8 @@ function Home() {
   }, [])
 
   return (
-    <div className="api-page">
-      <div className="content">
+    <div className='api-page'>
+      <div className='content'>
         <h1>Start API Request Demo - Names List</h1>
         <ul>
           {names.map((name) => (
