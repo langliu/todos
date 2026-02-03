@@ -1,0 +1,7 @@
+{
+  "ignorePatterns": ["node_modules", "dist", "build", "*.gen.ts"],
+  "singleQuote": true,
+  "semi": false,
+  "jsxSingleQuote": true,
+  "endOfLine": "lf"
+}

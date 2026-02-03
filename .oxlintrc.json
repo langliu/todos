@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "off"
+  },
+  "rules": {
+    "no-console": "warn",
+    "react-in-jsx-scope": "off",
+    "no-unassigned-import": "off"
+  },
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "es2022": true
+  },
+  "globals": {},
+  "ignorePatterns": ["node_modules", "dist", "build", "*.gen.ts"]
+}
