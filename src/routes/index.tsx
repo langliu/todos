@@ -1,36 +1,417 @@
+import { useState, useEffect, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import '../App.css'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { TodoItem } from '@/components/TodoItem'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { AddTodoDialog } from '@/components/AddTodoDialog'
+import {
+  getTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo,
+} from '@/data/todos.server'
+import { getCurrentUser, signOut } from '@/data/auth.server'
+import type { Todo } from '@/lib/supabase'
+import {
+  Sun,
+  Star,
+  Calendar,
+  Home,
+  Search,
+  CheckCircle2,
+  LogOut,
+  User,
+  Sparkles,
+} from 'lucide-react'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({
+  component: TodosPage,
+  loader: async () => {
+    const [todos, user] = await Promise.all([getTodos(), getCurrentUser()])
+    return { todos, user }
+  },
+})
 
-function App() {
+function TodosPage() {
+  const { todos: initialTodos, user } = Route.useLoaderData()
+  const queryClient = useQueryClient()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedList, setSelectedList] = useState('my-day')
+
+  const { data: todos = initialTodos } = useQuery({
+    queryKey: ['todos'],
+    queryFn: getTodos,
+    initialData: initialTodos,
+  })
+
+  const createMutation = useMutation({
+    mutationFn: createTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: updateTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    },
+  })
+
+  const handleToggle = (id: string, completed: boolean) => {
+    updateMutation.mutate({ data: { id, data: { completed } } })
+  }
+
+  const handleToggleImportant = (id: string, important: boolean) => {
+    updateMutation.mutate({ data: { id, data: { important } } })
+  }
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate({ data: { id } })
+  }
+
+  const filteredTodos = useMemo(() => {
+    return todos.filter((todo: Todo) => {
+      const matchesSearch = todo.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+
+      switch (selectedList) {
+        case 'my-day':
+          return matchesSearch && !todo.completed
+        case 'important':
+          return matchesSearch && todo.important
+        case 'planned':
+          return matchesSearch && todo.due_date
+        case 'tasks':
+          return matchesSearch
+        default:
+          return matchesSearch
+      }
+    })
+  }, [todos, searchQuery, selectedList])
+
+  const myDayTodos = todos.filter((t: Todo) => !t.completed)
+  const importantTodos = todos.filter((t: Todo) => t.important && !t.completed)
+  const plannedTodos = todos.filter((t: Todo) => t.due_date && !t.completed)
+  const allTodos = todos.filter((t: Todo) => !t.completed)
+
+  const getListTitle = () => {
+    switch (selectedList) {
+      case 'my-day':
+        return '我的一天'
+      case 'important':
+        return '重要'
+      case 'planned':
+        return '已计划日程'
+      case 'tasks':
+        return '任务'
+      default:
+        return '我的一天'
+    }
+  }
+
+  const getListIcon = () => {
+    switch (selectedList) {
+      case 'my-day':
+        return <Sun className="h-8 w-8" />
+      case 'important':
+        return <Star className="h-8 w-8" />
+      case 'planned':
+        return <Calendar className="h-8 w-8" />
+      case 'tasks':
+        return <Home className="h-8 w-8" />
+      default:
+        return <Sun className="h-8 w-8" />
+    }
+  }
+
+  const getListGradient = () => {
+    switch (selectedList) {
+      case 'my-day':
+        return 'from-orange-400 to-yellow-400'
+      case 'important':
+        return 'from-red-400 to-pink-400'
+      case 'planned':
+        return 'from-blue-400 to-purple-400'
+      case 'tasks':
+        return 'from-teal-400 to-emerald-400'
+      default:
+        return 'from-orange-400 to-yellow-400'
+    }
+  }
+
+  const getEmptyStateMessage = () => {
+    switch (selectedList) {
+      case 'my-day':
+        return {
+          title: '专注于你的一天',
+          subtitle: '添加任务来开始你的一天',
+        }
+      case 'important':
+        return {
+          title: '没有重要任务',
+          subtitle: '标记任务为重要以在此查看',
+        }
+      case 'planned':
+        return {
+          title: '没有计划的任务',
+          subtitle: '为任务设置截止日期以在此查看',
+        }
+      case 'tasks':
+        return {
+          title: '开始你的任务清单',
+          subtitle: '添加你的第一个任务',
+        }
+      default:
+        return {
+          title: '专注于你的一天',
+          subtitle: '添加任务来开始你的一天',
+        }
+    }
+  }
+
   return (
-    <div className='App'>
-      <header className='App-header'>
-        <img src='/tanstack-circle-logo.png' className='App-logo' alt='TanStack Logo' />
-        <p className="text-3xl font-bold text-blue-500 mb-4">
-          Tailwind CSS v4 is working!
-        </p>
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
-        </p>
-        <a
-          className='App-link'
-          href='https://reactjs.org'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Learn React
-        </a>
-        <a
-          className='App-link'
-          href='https://tanstack.com'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Learn TanStack
-        </a>
-      </header>
+    <div className="flex h-screen bg-background overflow-hidden">
+      <aside className="w-72 bg-sidebar border-r flex flex-col shadow-sm">
+        <div className="p-6 border-b">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+              <CheckCircle2 className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">
+                To Do
+              </h1>
+              <p className="text-xs text-sidebar-foreground/60">高效任务管理</p>
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1">
+          <SidebarItem
+            icon={<Sun className="h-5 w-5" />}
+            label="我的一天"
+            count={myDayTodos.length}
+            active={selectedList === 'my-day'}
+            onClick={() => setSelectedList('my-day')}
+            gradient="from-orange-400 to-yellow-400"
+          />
+          <SidebarItem
+            icon={<Star className="h-5 w-5" />}
+            label="重要"
+            count={importantTodos.length}
+            active={selectedList === 'important'}
+            onClick={() => setSelectedList('important')}
+            gradient="from-red-400 to-pink-400"
+          />
+          <SidebarItem
+            icon={<Calendar className="h-5 w-5" />}
+            label="已计划日程"
+            count={plannedTodos.length}
+            active={selectedList === 'planned'}
+            onClick={() => setSelectedList('planned')}
+            gradient="from-blue-400 to-purple-400"
+          />
+          <SidebarItem
+            icon={<Home className="h-5 w-5" />}
+            label="任务"
+            count={allTodos.length}
+            active={selectedList === 'tasks'}
+            onClick={() => setSelectedList('tasks')}
+            gradient="from-teal-400 to-emerald-400"
+          />
+        </nav>
+
+        {user && (
+          <div className="p-4 border-t bg-muted/30">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-sidebar/50">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
+                {user.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user.email}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0 h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      <main className="flex-1 flex flex-col min-w-0 bg-background">
+        <header className="h-20 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-8 sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getListGradient()} flex items-center justify-center shadow-lg`}>
+              {getListIcon()}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                {getListTitle()}
+              </h1>
+              <ClientDate />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <AddTodoDialog
+              onAdd={(todo) => {
+                createMutation.mutate({ data: todo })
+              }}
+            />
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-auto p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="relative mb-8">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="搜索任务..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 text-base rounded-xl border-2 border-transparent bg-card focus:border-primary/20 focus:bg-background transition-all"
+              />
+            </div>
+
+            <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+              {filteredTodos.length === 0 ? (
+                <EmptyState
+                  icon={getListIcon()}
+                  {...getEmptyStateMessage()}
+                />
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {filteredTodos.map((todo: Todo, index: number) => (
+                    <div
+                      key={todo.id}
+                      className="animate-slide-up"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <TodoItem
+                        todo={todo}
+                        onToggle={handleToggle}
+                        onToggleImportant={handleToggleImportant}
+                        onDelete={handleDelete}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {filteredTodos.length > 0 && (
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                共 {filteredTodos.length} 个任务
+              </p>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
+  )
+}
+
+interface SidebarItemProps {
+  icon: React.ReactNode
+  label: string
+  count: number
+  active?: boolean
+  onClick: () => void
+  gradient: string
+}
+
+function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarItemProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+        active
+          ? 'bg-primary/10 text-primary shadow-sm'
+          : 'hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+          active
+            ? `bg-gradient-to-br ${gradient} text-white shadow-md`
+            : 'bg-muted text-muted-foreground'
+        }`}>
+          {icon}
+        </div>
+        <span>{label}</span>
+      </div>
+      {count > 0 && (
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
+          active
+            ? 'bg-primary/20 text-primary'
+            : 'bg-muted text-muted-foreground'
+        }`}>
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+interface EmptyStateProps {
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+}
+
+function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
+  return (
+    <div className="text-center py-20 px-8 animate-fade-in">
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/50 mb-6">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold text-foreground mb-2">
+        {title}
+      </h3>
+      <p className="text-muted-foreground">
+        {subtitle}
+      </p>
+      <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>点击下方按钮添加任务</span>
+      </div>
+    </div>
+  )
+}
+
+function ClientDate() {
+  const [date, setDate] = useState('')
+
+  useEffect(() => {
+    setDate(
+      new Date().toLocaleDateString('zh-CN', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      })
+    )
+  }, [])
+
+  return (
+    <span className="text-sm text-muted-foreground font-medium">
+      {date}
+    </span>
   )
 }

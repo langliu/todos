@@ -37,5 +37,5 @@
   "[css]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "cSpell.words": ["oxfmt", "oxlint"]
+  "cSpell.words": ["oxfmt", "oxlint", "supabase"]
 }
