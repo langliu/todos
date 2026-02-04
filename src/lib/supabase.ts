@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
@@ -28,6 +28,4 @@ export type CreateTodoInput = {
   important?: boolean
 }
 
-export type UpdateTodoInput = Partial<
-  Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>
->
+export type UpdateTodoInput = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
