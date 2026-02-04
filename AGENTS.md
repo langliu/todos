@@ -16,7 +16,7 @@
 
 - **运行时**: Bun | **框架**: TanStack Start + Router | **UI**: React 19
 - **语言**: TypeScript (严格模式) | **构建**: Vite 7 | **测试**: Vitest | **样式**: CSS + Tailwind
-- **数据库**: Supabase | **认证**: Better Auth
+- **数据库**: Supabase (包括认证)
 - **状态管理**: TanStack Query | **组件库**: shadcn/ui (基于 Base UI)
 - **图标**: Lucide React | **日期处理**: date-fns
 
