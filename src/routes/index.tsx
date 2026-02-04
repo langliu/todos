@@ -122,30 +122,30 @@ function TodosPage() {
   const getListIcon = () => {
     switch (selectedList) {
       case 'my-day':
-        return <Sun className="h-8 w-8" />
+        return <Sun className="h-7 w-7" />
       case 'important':
-        return <Star className="h-8 w-8" />
+        return <Star className="h-7 w-7" />
       case 'planned':
-        return <Calendar className="h-8 w-8" />
+        return <Calendar className="h-7 w-7" />
       case 'tasks':
-        return <Home className="h-8 w-8" />
+        return <Home className="h-7 w-7" />
       default:
-        return <Sun className="h-8 w-8" />
+        return <Sun className="h-7 w-7" />
     }
   }
 
   const getListGradient = () => {
     switch (selectedList) {
       case 'my-day':
-        return 'from-orange-400 to-yellow-400'
+        return 'from-orange-400 to-amber-400'
       case 'important':
-        return 'from-red-400 to-pink-400'
+        return 'from-red-500 to-pink-500'
       case 'planned':
-        return 'from-blue-400 to-purple-400'
+        return 'from-blue-500 to-indigo-500'
       case 'tasks':
-        return 'from-teal-400 to-emerald-400'
+        return 'from-teal-500 to-emerald-500'
       default:
-        return 'from-orange-400 to-yellow-400'
+        return 'from-orange-400 to-amber-400'
     }
   }
 
@@ -181,17 +181,17 @@ function TodosPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <aside className="w-72 bg-sidebar border-r flex flex-col shadow-sm">
+      <aside className="w-72 bg-sidebar border-r flex flex-col">
         <div className="p-6 border-b">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2">
               <CheckCircle2 className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">
                 To Do
               </h1>
-              <p className="text-xs text-sidebar-foreground/60">高效任务管理</p>
+              <p className="text-xs text-muted-foreground">高效任务管理</p>
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ function TodosPage() {
             count={myDayTodos.length}
             active={selectedList === 'my-day'}
             onClick={() => setSelectedList('my-day')}
-            gradient="from-orange-400 to-yellow-400"
+            gradient="from-orange-400 to-amber-400"
           />
           <SidebarItem
             icon={<Star className="h-5 w-5" />}
@@ -211,7 +211,7 @@ function TodosPage() {
             count={importantTodos.length}
             active={selectedList === 'important'}
             onClick={() => setSelectedList('important')}
-            gradient="from-red-400 to-pink-400"
+            gradient="from-red-500 to-pink-500"
           />
           <SidebarItem
             icon={<Calendar className="h-5 w-5" />}
@@ -219,7 +219,7 @@ function TodosPage() {
             count={plannedTodos.length}
             active={selectedList === 'planned'}
             onClick={() => setSelectedList('planned')}
-            gradient="from-blue-400 to-purple-400"
+            gradient="from-blue-500 to-indigo-500"
           />
           <SidebarItem
             icon={<Home className="h-5 w-5" />}
@@ -227,14 +227,14 @@ function TodosPage() {
             count={allTodos.length}
             active={selectedList === 'tasks'}
             onClick={() => setSelectedList('tasks')}
-            gradient="from-teal-400 to-emerald-400"
+            gradient="from-teal-500 to-emerald-500"
           />
         </nav>
 
         {user && (
-          <div className="p-4 border-t bg-muted/30">
-            <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-sidebar/50">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm">
+          <div className="p-4 border-t bg-muted/50">
+            <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-sidebar/50">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm shadow-elevation-1">
                 {user.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
               </div>
               <div className="flex-1 min-w-0">
@@ -245,7 +245,7 @@ function TodosPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="flex-shrink-0 h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="flex-shrink-0 h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors"
                 onClick={() => signOut()}
               >
                 <LogOut className="h-4 w-4" />
@@ -256,9 +256,9 @@ function TodosPage() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 bg-background">
-        <header className="h-20 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-8 sticky top-0 z-10">
+        <header className="h-20 border-b bg-card/80 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getListGradient()} flex items-center justify-center shadow-lg`}>
+            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getListGradient()} flex items-center justify-center shadow-elevation-2`}>
               {getListIcon()}
             </div>
             <div>
@@ -278,30 +278,30 @@ function TodosPage() {
         </header>
 
         <div className="flex-1 overflow-auto p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="relative mb-8">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="搜索任务..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-base rounded-xl border-2 border-transparent bg-card focus:border-primary/20 focus:bg-background transition-all"
+                className="h-12 pl-12 pr-4 text-base rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all"
               />
             </div>
 
-            <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
+            <div className="bg-card rounded-3xl border border-border shadow-elevation-2 overflow-hidden">
               {filteredTodos.length === 0 ? (
                 <EmptyState
                   icon={getListIcon()}
                   {...getEmptyStateMessage()}
                 />
               ) : (
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-border/60">
                   {filteredTodos.map((todo: Todo, index: number) => (
                     <div
                       key={todo.id}
                       className="animate-slide-up"
-                      style={{ animationDelay: `${index * 50}ms` }}
+                      style={{ animationDelay: `${index * 60}ms` }}
                     >
                       <TodoItem
                         todo={todo}
@@ -316,7 +316,7 @@ function TodosPage() {
             </div>
 
             {filteredTodos.length > 0 && (
-              <p className="text-center text-sm text-muted-foreground mt-6">
+              <p className="text-center text-sm text-muted-foreground py-2">
                 共 {filteredTodos.length} 个任务
               </p>
             )}
@@ -341,27 +341,27 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+      className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer ${
         active
-          ? 'bg-primary/10 text-primary shadow-sm'
-          : 'hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground'
+          ? 'bg-primary/10 text-primary shadow-elevation-1'
+          : 'hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground'
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
           active
-            ? `bg-gradient-to-br ${gradient} text-white shadow-md`
-            : 'bg-muted text-muted-foreground'
+            ? `bg-gradient-to-br ${gradient} text-white shadow-elevation-1`
+            : 'bg-muted/50 text-muted-foreground'
         }`}>
           {icon}
         </div>
         <span>{label}</span>
       </div>
       {count > 0 && (
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full transition-all ${
           active
             ? 'bg-primary/20 text-primary'
-            : 'bg-muted text-muted-foreground'
+            : 'bg-muted/50 text-muted-foreground'
         }`}>
           {count}
         </span>
@@ -379,18 +379,18 @@ interface EmptyStateProps {
 function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
     <div className="text-center py-20 px-8 animate-fade-in">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/50 mb-6">
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/60 mb-6 shadow-elevation-1">
         {icon}
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">
         {title}
       </h3>
-      <p className="text-muted-foreground">
+      <p className="text-muted-foreground mb-8">
         {subtitle}
       </p>
-      <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <Sparkles className="h-4 w-4 text-primary" />
-        <span>点击下方按钮添加任务</span>
+        <span>点击右上角按钮添加任务</span>
       </div>
     </div>
   )

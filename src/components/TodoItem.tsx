@@ -10,14 +10,24 @@ interface TodoItemProps {
   onDelete: (id: string) => void
 }
 
+function isOverdue(dueDate: string): boolean {
+  const due = new Date(dueDate)
+  const today = new Date()
+  const dueDateOnly = due.getFullYear() * 10000 + (due.getMonth() + 1) * 100 + due.getDate()
+  const todayDateOnly = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
+  return dueDateOnly < todayDateOnly
+}
+
 export function TodoItem({
   todo,
   onToggle,
   onToggleImportant,
   onDelete,
 }: TodoItemProps) {
+  const overdue = todo.due_date ? isOverdue(todo.due_date) : false
+
   return (
-    <div className="group flex items-center gap-3 p-4 bg-card hover:bg-muted/50 transition-all duration-200 cursor-pointer">
+    <div className="group flex items-center gap-4 p-5 bg-card hover:bg-muted/40 transition-all duration-200 cursor-pointer">
       <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground">
         <GripVertical className="h-4 w-4" />
       </div>
@@ -26,11 +36,11 @@ export function TodoItem({
         <Checkbox
           checked={todo.completed}
           onCheckedChange={(checked) => onToggle(todo.id, checked as boolean)}
-          className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all"
+          className="h-5.5 w-5.5 rounded-full border-2 border-muted-foreground/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all shadow-sm"
         />
       </div>
 
-      <div className="flex-1 min-w-0 py-1">
+      <div className="flex-1 min-w-0 py-1.5">
         <p
           className={`font-medium truncate transition-all duration-200 ${
             todo.completed
@@ -41,37 +51,37 @@ export function TodoItem({
           {todo.title}
         </p>
         {todo.description && (
-          <p className={`text-sm truncate mt-0.5 transition-all duration-200 ${
-            todo.completed ? 'text-muted-foreground/60' : 'text-muted-foreground'
+          <p className={`text-sm truncate mt-1 transition-all duration-200 ${
+            todo.completed ? 'text-muted-foreground/50' : 'text-muted-foreground'
           }`}>
             {todo.description}
           </p>
         )}
         {todo.due_date && (
-          <div className={`flex items-center gap-1.5 mt-1.5 text-xs transition-all duration-200 ${
+          <div className={`flex items-center gap-1.5 mt-2 text-xs font-medium transition-all duration-200 ${
             todo.completed
-              ? 'text-muted-foreground/50'
-              : new Date(todo.due_date) < new Date()
-                ? 'text-destructive'
-                : 'text-muted-foreground'
+              ? 'text-muted-foreground/40'
+              : overdue
+                ? 'text-destructive bg-destructive/10 px-2 py-0.5 rounded-full inline-flex'
+                : 'text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full inline-flex'
           }`}>
             <Calendar className="h-3 w-3" />
             <span>{new Date(todo.due_date).toLocaleDateString('zh-CN', {
               month: 'short',
               day: 'numeric',
             })}</span>
-            {new Date(todo.due_date) < new Date() && !todo.completed && (
-              <span className="text-destructive font-medium ml-1">已逾期</span>
+            {overdue && !todo.completed && (
+              <span className="ml-1">已逾期</span>
             )}
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
         <Button
           variant="ghost"
           size="icon"
-          className={`h-9 w-9 rounded-lg transition-all duration-200 ${
+          className={`h-9 w-9 rounded-xl transition-all duration-200 ${
             todo.important
               ? 'text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20'
               : 'text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10'
@@ -91,7 +101,7 @@ export function TodoItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+          className="h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
           onClick={(e) => {
             e.stopPropagation()
             onDelete(todo.id)

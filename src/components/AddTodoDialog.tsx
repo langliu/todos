@@ -6,11 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar } from '@/components/ui/calendar'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Dialog,
   DialogContent,
@@ -75,130 +71,140 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         {trigger || (
-          <Button
-            className="gap-2 h-11 px-5 rounded-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30"
-          >
-            <Plus className="h-4 w-4" />
-            <span>添加任务</span>
+          <Button className='gap-2 h-11 px-6 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 hover:shadow-elevation-3'>
+            <Plus className='h-4 w-4' />
+            <span className='font-semibold'>添加任务</span>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px] rounded-2xl p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-r from-muted/50 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+      <DialogContent className='sm:max-w-125 rounded-3xl p-0 overflow-hidden shadow-elevation-4'>
+        <DialogHeader className='p-6 pb-4 border-b bg-linear-to-br from-muted/60 to-transparent'>
+          <div className='flex items-center gap-3'>
+            <div className='w-11 h-11 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
+              <Sparkles className='h-5 w-5 text-white' />
             </div>
-            <DialogTitle className="text-xl font-bold">新建任务</DialogTitle>
+            <DialogTitle className='text-xl font-bold'>新建任务</DialogTitle>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-semibold text-foreground">
-              任务标题 <span className="text-destructive">*</span>
+        <form onSubmit={handleSubmit} className='p-6 space-y-5'>
+          <div className='space-y-2'>
+            <Label htmlFor='title' className='text-sm font-semibold text-foreground'>
+              任务标题 <span className='text-destructive'>*</span>
             </Label>
             <Input
-              id="title"
-              placeholder="输入任务标题..."
+              id='title'
+              placeholder='输入任务标题...'
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-12 text-base rounded-xl border-2 border-transparent bg-muted focus:border-primary/20 focus:bg-background transition-all"
+              className='h-12 px-4 text-base rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all'
               autoFocus
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-semibold text-foreground">
-              描述 <span className="text-muted-foreground font-normal">（可选）</span>
+          <div className='space-y-2'>
+            <Label htmlFor='description' className='text-sm font-semibold text-foreground'>
+              描述 <span className='text-muted-foreground font-normal'>（可选）</span>
             </Label>
             <Textarea
-              id="description"
-              placeholder="添加任务描述..."
+              id='description'
+              placeholder='添加任务描述...'
               value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
-              className="min-h-[100px] rounded-xl border-2 border-transparent bg-muted focus:border-primary/20 focus:bg-background transition-all resize-none"
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setDescription(e.target.value)
+              }
+              className='min-h-25 px-4 py-3 rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all resize-none'
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dueDate" className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              截止日期 <span className="text-muted-foreground font-normal">（可选）</span>
+          <div className='space-y-2'>
+            <Label
+              htmlFor='dueDate'
+              className='text-sm font-semibold text-foreground flex items-center gap-2'
+            >
+              <CalendarIcon className='h-4 w-4 text-muted-foreground' />
+              截止日期 <span className='text-muted-foreground font-normal'>（可选）</span>
             </Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
+              <PopoverTrigger className={'w-full'}>
                 <Button
-                  id="dueDate"
-                  variant="outline"
+                  id='dueDate'
+                  type='button'
+                  variant='outline'
                   className={cn(
-                    "w-full h-12 rounded-xl border-2 border-transparent bg-muted focus:border-primary/20 focus:bg-background transition-all justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
+                    'w-full h-12 px-4 rounded-2xl border-2 border-border bg-card shadow-elevation-1 justify-start text-left font-normal hover:bg-muted/40 focus:border-primary/30 transition-all',
+                    !dueDate && 'text-muted-foreground',
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className='mr-3 h-4 w-4' />
                   {dueDate ? format(dueDate, 'yyyy年M月d日', { locale: zhCN }) : '选择日期'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={(date) => {
-                    setDueDate(date)
-                    setCalendarOpen(false)
-                  }}
-                  initialFocus
-                />
+              <PopoverContent
+                className='w-full min-w-[320px] p-3 rounded-2xl shadow-elevation-3'
+                align='start'
+              >
+                <div className='w-full'>
+                  <Calendar
+                    mode='single'
+                    selected={dueDate}
+                    onSelect={(date) => {
+                      setDueDate(date)
+                      setCalendarOpen(false)
+                    }}
+                    initialFocus
+                    className='rounded-2xl w-full'
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
 
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+          <div className='flex items-center gap-3 p-4 rounded-2xl bg-muted/60'>
             <button
-              type="button"
+              type='button'
               onClick={() => setImportant(!important)}
               className={cn(
-                "flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200',
                 important
-                  ? "bg-yellow-500 border-yellow-500"
-                  : "border-muted-foreground/30 hover:border-yellow-500"
+                  ? 'bg-yellow-500 border-yellow-500 shadow-elevation-1'
+                  : 'border-muted-foreground/30 hover:border-yellow-500',
               )}
             >
               {important && (
-                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <svg className='w-3.5 h-3.5 text-white' fill='currentColor' viewBox='0 0 20 20'>
                   <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
+                    fillRule='evenodd'
+                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                    clipRule='evenodd'
                   />
                 </svg>
               )}
             </button>
             <Label
-              htmlFor="important"
-              className="text-sm font-medium cursor-pointer flex-1"
+              htmlFor='important'
+              className='text-sm font-medium cursor-pointer flex-1'
               onClick={() => setImportant(!important)}
             >
               标记为重要
             </Label>
           </div>
 
-          <DialogFooter className="gap-3 pt-2">
+          <DialogFooter className='gap-3 pt-2'>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => handleOpenChange(false)}
-              className="h-11 px-6 rounded-xl"
+              className='h-11 px-6 rounded-2xl font-medium'
             >
               取消
             </Button>
             <Button
-              type="submit"
+              type='submit'
               disabled={!title.trim() || isSubmitting}
-              className="h-11 px-8 rounded-xl bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all disabled:opacity-50"
+              className='h-11 px-8 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 disabled:opacity-50 font-semibold'
             >
               {isSubmitting ? '添加中...' : '添加任务'}
             </Button>
