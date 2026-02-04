@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -12,30 +12,40 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Sparkles, Calendar as CalendarIcon } from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon } from 'lucide-react'
+import type { Todo } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
-interface AddTodoDialogProps {
-  onAdd: (todo: {
-    title: string
-    description?: string
-    due_date?: string
-    important?: boolean
-  }) => void
-  trigger?: React.ReactNode
+interface EditTodoDialogProps {
+  todo: Todo
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onUpdate: (
+    id: string,
+    data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>,
+  ) => void
 }
 
-export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined)
-  const [important, setImportant] = useState(false)
+export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoDialogProps) {
+  const [title, setTitle] = useState(todo.title)
+  const [description, setDescription] = useState(todo.description || '')
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    todo.due_date ? new Date(todo.due_date) : undefined,
+  )
+  const [important, setImportant] = useState(todo.important)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setTitle(todo.title)
+      setDescription(todo.description || '')
+      setDueDate(todo.due_date ? new Date(todo.due_date) : undefined)
+      setImportant(todo.important)
+    }
+  }, [open, todo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,53 +53,33 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
 
     setIsSubmitting(true)
 
-    onAdd({
+    onUpdate(todo.id, {
       title: title.trim(),
       description: description.trim() || undefined,
-      due_date: dueDate ? dueDate.toISOString() : undefined,
+      due_date: dueDate ? dueDate.toISOString() : null,
       important,
     })
 
-    setTitle('')
-    setDescription('')
-    setDueDate(undefined)
-    setImportant(false)
     setIsSubmitting(false)
-    setOpen(false)
+    onOpenChange(false)
   }
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-    if (!newOpen) {
-      setTitle('')
-      setDescription('')
-      setDueDate(undefined)
-      setImportant(false)
+    if (!isSubmitting) {
+      onOpenChange(newOpen)
       setCalendarOpen(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {trigger ? (
-        <DialogTrigger render={<>{trigger}</>} />
-      ) : (
-        <DialogTrigger
-          render={
-            <Button className='gap-2 h-11 px-6 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 hover:shadow-elevation-3'>
-              <Plus className='h-4 w-4' />
-              <span className='font-semibold'>添加任务</span>
-            </Button>
-          }
-        />
-      )}
       <DialogContent className='sm:max-w-125 rounded-3xl p-0 overflow-hidden shadow-elevation-4'>
         <DialogHeader className='p-6 pb-4 border-b bg-linear-to-br from-muted/60 to-transparent'>
           <div className='flex items-center gap-3'>
             <div className='w-11 h-11 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
               <Sparkles className='h-5 w-5 text-white' />
             </div>
-            <DialogTitle className='text-xl font-bold'>新建任务</DialogTitle>
+            <DialogTitle className='text-xl font-bold'>编辑任务</DialogTitle>
           </div>
         </DialogHeader>
 
@@ -212,7 +202,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
               disabled={!title.trim() || isSubmitting}
               className='h-11 px-8 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 disabled:opacity-50 font-semibold'
             >
-              {isSubmitting ? '添加中...' : '添加任务'}
+              {isSubmitting ? '保存中...' : '保存修改'}
             </Button>
           </DialogFooter>
         </form>

@@ -2,6 +2,16 @@
 
 > Guidelines for AI agents working in this TanStack Start application.
 
+## Communication Language
+
+**IMPORTANT**: All AI agents must use Chinese for all communication, responses, and explanations when working on this project. This includes:
+- All messages to the user
+- Code explanations and comments
+- Documentation and descriptions
+- Error messages and debugging information
+
+Only technical terms (e.g., React, TypeScript, TanStack) should remain in English.
+
 ## Tech Stack
 
 - **Runtime**: Bun | **Framework**: TanStack Start + Router | **UI**: React 19

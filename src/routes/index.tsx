@@ -5,6 +5,7 @@ import { TodoItem } from '@/components/TodoItem'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { AddTodoDialog } from '@/components/AddTodoDialog'
+import { EditTodoDialog } from '@/components/EditTodoDialog'
 import {
   getTodos,
   createTodo,
@@ -13,6 +14,7 @@ import {
 } from '@/data/todos.server'
 import { getCurrentUser, signOut } from '@/data/auth.server'
 import type { Todo } from '@/lib/supabase'
+import type { UpdateTodoInput } from '@/data/todos.server'
 import {
   Sun,
   Star,
@@ -38,6 +40,7 @@ function TodosPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedList, setSelectedList] = useState('my-day')
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
   const { data: todos = initialTodos } = useQuery({
     queryKey: ['todos'],
@@ -76,6 +79,22 @@ function TodosPage() {
 
   const handleDelete = (id: string) => {
     deleteMutation.mutate({ data: { id } })
+  }
+
+  const handleEdit = (todo: Todo) => {
+    setEditingTodo(todo)
+  }
+
+  const handleUpdate = (id: string, data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+    const updateData: UpdateTodoInput = {
+      ...data,
+      description: data.description || undefined,
+      due_date: data.due_date || undefined,
+    }
+    updateMutation.mutate({
+      data: { id, data: updateData },
+    })
+    setEditingTodo(null)
   }
 
   const filteredTodos = useMemo(() => {
@@ -308,6 +327,7 @@ function TodosPage() {
                         onToggle={handleToggle}
                         onToggleImportant={handleToggleImportant}
                         onDelete={handleDelete}
+                        onEdit={handleEdit}
                       />
                     </div>
                   ))}
@@ -323,6 +343,15 @@ function TodosPage() {
           </div>
         </div>
       </main>
+
+      {editingTodo && (
+        <EditTodoDialog
+          todo={editingTodo}
+          open={!!editingTodo}
+          onOpenChange={(open) => !open && setEditingTodo(null)}
+          onUpdate={handleUpdate}
+        />
+      )}
     </div>
   )
 }
