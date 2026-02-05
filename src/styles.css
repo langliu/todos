@@ -106,6 +106,9 @@
   .dark .glass-effect {
     background: rgba(30, 41, 59, 0.8);
   }
+  .data-horizontal\:h-px {
+    height: 1px;
+  }
 }
 
 @keyframes animate-in {
