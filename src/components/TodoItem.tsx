@@ -2,6 +2,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Star, Trash2, Calendar, GripVertical, Pencil } from 'lucide-react'
 import type { Todo } from '@/lib/supabase'
+import { useQuery } from '@tanstack/react-query'
+import { getTodoTags } from '@/data/tags.server'
+import { TagBadge } from './TagBadge'
 
 interface TodoItemProps {
   todo: Todo
@@ -21,6 +24,10 @@ function isOverdue(dueDate: string): boolean {
 
 export function TodoItem({ todo, onToggle, onToggleImportant, onDelete, onEdit }: TodoItemProps) {
   const overdue = todo.due_date ? isOverdue(todo.due_date) : false
+  const { data: tags = [] } = useQuery({
+    queryKey: ['todoTags', todo.id],
+    queryFn: () => getTodoTags({ data: { todoId: todo.id } }),
+  })
 
   return (
     <div className='group flex items-center gap-4 p-5 bg-card hover:bg-muted/40 transition-all duration-200 cursor-pointer'>
@@ -54,25 +61,32 @@ export function TodoItem({ todo, onToggle, onToggleImportant, onDelete, onEdit }
           </p>
         )}
         {todo.due_date && (
-          <div
-            className={`flex items-center gap-1.5 mt-2 text-xs font-medium transition-all duration-200 ${
-              todo.completed
-                ? 'text-muted-foreground/40'
-                : overdue
-                  ? 'text-destructive bg-destructive/10 px-2 py-0.5 rounded-full inline-flex'
-                  : 'text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full inline-flex'
-            }`}
-          >
-            <Calendar className='h-3 w-3' />
-            <span>
-              {new Date(todo.due_date).toLocaleDateString('zh-CN', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </span>
-            {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
-          </div>
-        )}
+           <div
+             className={`flex items-center gap-1.5 mt-2 text-xs font-medium transition-all duration-200 ${
+               todo.completed
+                 ? 'text-muted-foreground/40'
+                 : overdue
+                   ? 'text-destructive bg-destructive/10 px-2 py-0.5 rounded-full inline-flex'
+                   : 'text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full inline-flex'
+             }`}
+           >
+             <Calendar className='h-3 w-3' />
+             <span>
+               {new Date(todo.due_date).toLocaleDateString('zh-CN', {
+                 month: 'short',
+                 day: 'numeric',
+               })}
+             </span>
+             {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
+           </div>
+         )}
+         {tags.length > 0 && (
+           <div className='flex flex-wrap gap-1.5 mt-2'>
+             {tags.map((tag) => (
+               <TagBadge key={tag.id} tag={tag} />
+             ))}
+           </div>
+         )}
       </div>
 
       <div className='flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200'>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +18,8 @@ import {
 import { Sparkles, Calendar as CalendarIcon } from 'lucide-react'
 import type { Todo } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { TagSelector } from './TagSelector'
+import { getTags, createTag, getTodoTags } from '@/data/tags.server'
 
 interface EditTodoDialogProps {
   todo: Todo
@@ -24,7 +27,9 @@ interface EditTodoDialogProps {
   onOpenChange: (open: boolean) => void
   onUpdate: (
     id: string,
-    data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>,
+    data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>> & {
+      tagIds?: string[]
+    },
   ) => void
 }
 
@@ -37,6 +42,27 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
   const [important, setImportant] = useState(todo.important)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: getTags,
+  })
+
+  const { data: todoTags = [], refetch: refetchTodoTags } = useQuery({
+    queryKey: ['todoTags', todo.id],
+    queryFn: () => getTodoTags({ data: { todoId: todo.id } }),
+    enabled: open,
+  })
+
+  const queryClient = useQueryClient()
+
+  const createTagMutation = useMutation({
+    mutationFn: createTag,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+    },
+  })
 
   useEffect(() => {
     if (open) {
@@ -44,8 +70,13 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
       setDescription(todo.description || '')
       setDueDate(todo.due_date ? new Date(todo.due_date) : undefined)
       setImportant(todo.important)
+      refetchTodoTags()
     }
-  }, [open, todo])
+  }, [open, todo, refetchTodoTags])
+
+  useEffect(() => {
+    setSelectedTagIds(todoTags.map((tag) => tag.id))
+  }, [todoTags])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,6 +89,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
       description: description.trim() || undefined,
       due_date: dueDate ? dueDate.toISOString() : null,
       important,
+      tagIds: selectedTagIds,
     })
 
     setIsSubmitting(false)
@@ -69,6 +101,25 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
       onOpenChange(newOpen)
       setCalendarOpen(false)
     }
+  }
+
+  const handleToggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    )
+  }
+
+  const handleCreateTag = (name: string, color: string) => {
+    createTagMutation.mutate(
+      { data: { name, color } },
+      {
+        onSuccess: (tag) => {
+          setSelectedTagIds((prev) => [...prev, tag.id])
+        },
+      }
+    )
   }
 
   return (
@@ -187,6 +238,13 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
               标记为重要
             </Label>
           </div>
+
+          <TagSelector
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onToggleTag={handleToggleTag}
+            onCreateTag={handleCreateTag}
+          />
 
           <DialogFooter className='gap-3 pt-2'>
             <Button

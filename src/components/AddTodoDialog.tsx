@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +18,8 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Sparkles, Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { TagSelector } from './TagSelector'
+import { getTags, createTag } from '@/data/tags.server'
 
 interface AddTodoDialogProps {
   onAdd: (todo: {
@@ -24,6 +27,7 @@ interface AddTodoDialogProps {
     description?: string
     due_date?: string
     important?: boolean
+    tagIds?: string[]
   }) => void
   trigger?: React.ReactNode
 }
@@ -36,6 +40,21 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
   const [important, setImportant] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: getTags,
+  })
+
+  const queryClient = useQueryClient()
+
+  const createTagMutation = useMutation({
+    mutationFn: createTag,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+    },
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,12 +67,14 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
       description: description.trim() || undefined,
       due_date: dueDate ? dueDate.toISOString() : undefined,
       important,
+      tagIds: selectedTagIds,
     })
 
     setTitle('')
     setDescription('')
     setDueDate(undefined)
     setImportant(false)
+    setSelectedTagIds([])
     setIsSubmitting(false)
     setOpen(false)
   }
@@ -65,8 +86,28 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
       setDescription('')
       setDueDate(undefined)
       setImportant(false)
+      setSelectedTagIds([])
       setCalendarOpen(false)
     }
+  }
+
+  const handleToggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    )
+  }
+
+  const handleCreateTag = (name: string, color: string) => {
+    createTagMutation.mutate(
+      { data: { name, color } },
+      {
+        onSuccess: (tag) => {
+          setSelectedTagIds((prev) => [...prev, tag.id])
+        },
+      }
+    )
   }
 
   return (
@@ -197,6 +238,13 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
               标记为重要
             </Label>
           </div>
+
+          <TagSelector
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onToggleTag={handleToggleTag}
+            onCreateTag={handleCreateTag}
+          />
 
           <DialogFooter className='gap-3 pt-2'>
             <Button

@@ -29,3 +29,29 @@ export type CreateTodoInput = {
 }
 
 export type UpdateTodoInput = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+
+export type Tag = {
+  id: string
+  user_id: string
+  name: string
+  color: string
+  created_at: string
+  updated_at: string
+}
+
+export type TodoTag = {
+  id: string
+  todo_id: string
+  tag_id: string
+  created_at: string
+}
+
+export type CreateTagInput = {
+  name: string
+  color?: string
+}
+
+export type UpdateTagInput = {
+  name?: string
+  color?: string
+}

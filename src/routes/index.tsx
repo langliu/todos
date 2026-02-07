@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { TodoItem } from '@/components/TodoItem'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,8 @@ import {
   deleteTodo,
 } from '@/data/todos.server'
 import { getCurrentUser, signOut } from '@/data/auth.server'
-import type { Todo } from '@/lib/supabase'
+import { getTags } from '@/data/tags.server'
+import type { Todo, Tag } from '@/lib/supabase'
 import type { UpdateTodoInput } from '@/data/todos.server'
 import {
   Sun,
@@ -26,6 +27,7 @@ import {
   User,
   Sparkles,
   Settings,
+  Tag as TagIcon,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
@@ -42,8 +44,14 @@ function TodosPage() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedList, setSelectedList] = useState('my-day')
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
   const [todos, setTodos] = useState<Todo[]>(initialTodos)
+
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: getTags,
+  })
 
   const createMutation = useMutation({
     mutationFn: createTodo,
@@ -112,6 +120,12 @@ function TodosPage() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
 
+      if (selectedTagId) {
+        const todoTags = queryClient.getQueryData<Tag[]>(['todoTags', todo.id]) || []
+        const hasTag = todoTags.some((tag) => tag.id === selectedTagId)
+        if (!hasTag) return false
+      }
+
       switch (selectedList) {
         case 'my-day':
           return matchesSearch && !todo.completed
@@ -125,7 +139,7 @@ function TodosPage() {
           return matchesSearch
       }
     })
-  }, [todos, searchQuery, selectedList])
+  }, [todos, searchQuery, selectedList, selectedTagId, queryClient])
 
   const myDayTodos = todos.filter((t: Todo) => !t.completed)
   const importantTodos = todos.filter((t: Todo) => t.important && !t.completed)
@@ -133,6 +147,10 @@ function TodosPage() {
   const allTodos = todos.filter((t: Todo) => !t.completed)
 
   const getListTitle = () => {
+    if (selectedTagId) {
+      const selectedTag = tags.find((tag) => tag.id === selectedTagId)
+      return selectedTag ? `标签: ${selectedTag.name}` : '标签'
+    }
     switch (selectedList) {
       case 'my-day':
         return '我的一天'
@@ -148,6 +166,9 @@ function TodosPage() {
   }
 
   const getListIcon = () => {
+    if (selectedTagId) {
+      return <TagIcon className="h-7 w-7" />
+    }
     switch (selectedList) {
       case 'my-day':
         return <Sun className="h-7 w-7" />
@@ -163,6 +184,12 @@ function TodosPage() {
   }
 
   const getListGradient = () => {
+    if (selectedTagId) {
+      const selectedTag = tags.find((tag) => tag.id === selectedTagId)
+      return selectedTag
+        ? `from-[${selectedTag.color}] to-[${selectedTag.color}80]`
+        : 'from-gray-400 to-gray-500'
+    }
     switch (selectedList) {
       case 'my-day':
         return 'from-orange-400 to-amber-400'
@@ -229,34 +256,96 @@ function TodosPage() {
             icon={<Sun className="h-5 w-5" />}
             label="我的一天"
             count={myDayTodos.length}
-            active={selectedList === 'my-day'}
-            onClick={() => setSelectedList('my-day')}
+            active={selectedList === 'my-day' && !selectedTagId}
+            onClick={() => {
+              setSelectedList('my-day')
+              setSelectedTagId(null)
+            }}
             gradient="from-orange-400 to-amber-400"
           />
           <SidebarItem
             icon={<Star className="h-5 w-5" />}
             label="重要"
             count={importantTodos.length}
-            active={selectedList === 'important'}
-            onClick={() => setSelectedList('important')}
+            active={selectedList === 'important' && !selectedTagId}
+            onClick={() => {
+              setSelectedList('important')
+              setSelectedTagId(null)
+            }}
             gradient="from-red-500 to-pink-500"
           />
           <SidebarItem
             icon={<Calendar className="h-5 w-5" />}
             label="已计划日程"
             count={plannedTodos.length}
-            active={selectedList === 'planned'}
-            onClick={() => setSelectedList('planned')}
+            active={selectedList === 'planned' && !selectedTagId}
+            onClick={() => {
+              setSelectedList('planned')
+              setSelectedTagId(null)
+            }}
             gradient="from-blue-500 to-indigo-500"
           />
           <SidebarItem
             icon={<Home className="h-5 w-5" />}
             label="任务"
             count={allTodos.length}
-            active={selectedList === 'tasks'}
-            onClick={() => setSelectedList('tasks')}
+            active={selectedList === 'tasks' && !selectedTagId}
+            onClick={() => {
+              setSelectedList('tasks')
+              setSelectedTagId(null)
+            }}
             gradient="from-teal-500 to-emerald-500"
           />
+
+          {tags.length > 0 && (
+            <div className="pt-4 border-t border-border/60">
+              <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                标签
+              </p>
+              <div className="space-y-1">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTagId(tag.id)
+                      setSelectedList('tasks')
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer ${
+                      selectedTagId === tag.id
+                        ? 'bg-primary/10 text-primary shadow-elevation-1'
+                        : 'hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      selectedTagId === tag.id
+                        ? 'bg-gradient-to-br shadow-elevation-1'
+                        : 'bg-muted/50 text-muted-foreground'
+                    }`}
+                    style={{
+                      backgroundColor: selectedTagId === tag.id ? tag.color : undefined,
+                      color: selectedTagId === tag.id ? 'white' : tag.color,
+                    }}
+                    >
+                      <TagIcon className="h-4 w-4" />
+                    </div>
+                    <span className="flex-1 text-left truncate">{tag.name}</span>
+                  </button>
+                ))}
+                <Link to="/tags">
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
+                  >
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 text-muted-foreground">
+                      <Settings className="h-4 w-4" />
+                    </div>
+                    <span className="flex-1 text-left">管理标签</span>
+                  </button>
+                </Link>
+              </div>
+            </div>
+          )}
         </nav>
 
         {user && (

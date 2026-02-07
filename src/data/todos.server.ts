@@ -3,12 +3,14 @@ import type { Todo } from '@/lib/supabase'
 import { authMiddleware } from '@/lib/auth'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
+import { updateTodoTags } from './tags.server'
 
 export type CreateTodoInput = {
   title: string
   description?: string
   due_date?: string
   important?: boolean
+  tagIds?: string[]
 }
 
 export type UpdateTodoInput = {
@@ -17,6 +19,7 @@ export type UpdateTodoInput = {
   completed?: boolean
   important?: boolean
   due_date?: string
+  tagIds?: string[]
 }
 
 type AuthContext = {
@@ -46,7 +49,7 @@ export const getTodos = createServerFn({ method: 'GET' })
 
 export const createTodo = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator((input: { title: string; description?: string; due_date?: string; important?: boolean }) => input)
+  .inputValidator((input: CreateTodoInput) => input)
   .handler(async ({ context, data }): Promise<Todo> => {
     const { supabase, userId } = context as AuthContext
 
@@ -66,25 +69,45 @@ export const createTodo = createServerFn({ method: 'POST' })
       throw new Error(error.message)
     }
 
+    if (data.tagIds && data.tagIds.length > 0) {
+      await updateTodoTags({
+        data: {
+          todoId: todo.id,
+          tagIds: data.tagIds,
+        },
+      })
+    }
+
     return todo
   })
 
 export const updateTodo = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .inputValidator((input: { id: string; data: UpdateTodoInput }) => input)
-  .handler(async ({ context, data }): Promise<Todo> => {
+  .handler(async ({ context, data: inputData }): Promise<Todo> => {
     const { supabase, userId } = context as AuthContext
+
+    const { tagIds, ...todoData } = inputData.data
 
     const { data: todo, error } = await supabase
       .from('todos')
-      .update(data.data)
-      .eq('id', data.id)
+      .update(todoData)
+      .eq('id', inputData.id)
       .eq('user_id', userId)
       .select()
       .single()
 
     if (error) {
       throw new Error(error.message)
+    }
+
+    if (tagIds !== undefined) {
+      await updateTodoTags({
+        data: {
+          todoId: inputData.id,
+          tagIds,
+        },
+      })
     }
 
     return todo
