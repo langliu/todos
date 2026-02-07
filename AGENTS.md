@@ -431,3 +431,18 @@ export const getTodos = createServerFn({ method: 'GET' })
     // 使用认证后的 supabase 客户端
   })
 ```
+
+## Git 提交策略
+
+**重要**: AI 助手必须遵守以下 Git 提交规则：
+
+- 🚫 **禁止自动提交**: 除非用户明确要求（如用户说"请提交"、"git commit"、"生成commit信息"等），AI 助手不得主动执行任何 git commit 操作
+- ✅ **允许的操作**: AI 可以执行 `git status`、`git diff`、`git log` 等只读命令来分析代码状态
+- ✅ **响应提交请求**: 当用户明确要求提交时，AI 必须按照上述 Conventional Commits 规范生成规范的提交信息
+- ⚠️ **谨慎推送**: `git push` 操作需要用户明确授权，AI 不得自行决定推送
+
+### 提交流程
+
+1. **用户要求提交**: AI 按规范生成提交信息并执行 `git commit`
+2. **用户未要求**: AI 完成代码任务后，停止工作，不执行任何提交操作
+3. **检查代码质量**: 提交前建议运行类型检查和测试（如果可用）
