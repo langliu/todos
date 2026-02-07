@@ -244,6 +244,80 @@ async function readData() {
 
 **请勿编辑**: `src/routeTree.gen.ts` - 由 TanStack Router 自动生成
 
+## Git Commit 规范
+
+使用 Conventional Commits 规范，提交消息格式如下：
+
+```
+<类型>(<范围>): <描述>
+
+[可选的正文]
+
+[可选的脚注]
+```
+
+### 类型（Type）
+
+| 类型       | 描述                     | 示例                                 |
+| ---------- | ------------------------ | ------------------------------------ |
+| `feat`     | 新功能                   | feat: 添加设置页面和修改密码功能      |
+| `fix`      | 修复 Bug                 | fix: 修复退出登录后无法重定向的问题   |
+| `docs`     | 文档变更                 | docs: 更新 README 使用说明           |
+| `style`    | 代码格式调整（不影响逻辑）| style: 统一代码缩进格式              |
+| `refactor`| 重构代码                 | refactor: 重构认证中间件逻辑          |
+| `perf`     | 性能优化                 | perf: 优化组件渲染性能               |
+| `test`     | 测试相关                 | test: 添加用户认证测试用例           |
+| `chore`    | 构建/工具链相关          | chore: 更新依赖包版本                |
+
+### 范围（Scope）
+
+可选的，用于指定 commit 影响的范围：
+- `auth`: 认证相关
+- `ui`: UI 组件
+- `api`: API 接口
+- `db`: 数据库
+- `router`: 路由
+- `server`: 服务器函数
+- `style`: 样式
+
+### 示例
+
+```bash
+feat(auth): 添加设置页面和修改密码功能
+- 创建 /settings 路由
+- 添加修改密码服务器函数
+- 在侧边栏添加设置按钮
+
+fix(auth): 修复退出登录后无法重定向的问题
+- 使用 useMutation 包装 signOut
+- 成功后清除缓存并跳转到登录页
+
+docs: 更新项目 README
+- 添加环境变量配置说明
+- 更新部署指南
+
+style: 统一代码格式
+- 使用 Prettier 格式化所有文件
+```
+
+### 提交命令
+
+```bash
+# 正常提交
+git add .
+git commit -m "feat: 添加功能描述"
+
+# 提交带正文
+git commit -m "feat: 添加功能描述
+
+- 详细说明1
+- 详细说明2
+"
+
+# 修改上一次提交
+git commit --amend
+```
+
 ## 测试
 
 ```typescript

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { TodoItem } from '@/components/TodoItem'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ import {
   LogOut,
   User,
   Sparkles,
+  Settings,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
@@ -38,34 +39,42 @@ export const Route = createFileRoute('/')({
 function TodosPage() {
   const { todos: initialTodos, user } = Route.useLoaderData()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedList, setSelectedList] = useState('my-day')
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
-
-  const { data: todos = initialTodos } = useQuery({
-    queryKey: ['todos'],
-    queryFn: getTodos,
-    initialData: initialTodos,
-  })
+  const [todos, setTodos] = useState<Todo[]>(initialTodos)
 
   const createMutation = useMutation({
     mutationFn: createTodo,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    onSuccess: (result) => {
+      setTodos(prev => [result, ...prev])
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: updateTodo,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
+    onSuccess: (result, variables) => {
+      setTodos(prev =>
+        prev.map(todo =>
+          todo.id === variables.data.id ? result : todo
+        )
+      )
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteTodo,
+    onSuccess: (_result, variables) => {
+      setTodos(prev => prev.filter(todo => todo.id !== variables.data.id))
+    },
+  })
+
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] })
+      queryClient.clear()
+      navigate({ to: '/auth/login' })
     },
   })
 
@@ -261,11 +270,21 @@ function TodosPage() {
                   {user.email}
                 </p>
               </div>
+              <Link to="/settings">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon"
                 className="flex-shrink-0 h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors"
-                onClick={() => signOut()}
+                onClick={() => signOutMutation.mutate({ data: undefined })}
+                disabled={signOutMutation.isPending}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -427,8 +446,10 @@ function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
 
 function ClientDate() {
   const [date, setDate] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     setDate(
       new Date().toLocaleDateString('zh-CN', {
         weekday: 'long',
@@ -440,7 +461,7 @@ function ClientDate() {
 
   return (
     <span className="text-sm text-muted-foreground font-medium">
-      {date}
+      {mounted ? date : ''}
     </span>
   )
 }

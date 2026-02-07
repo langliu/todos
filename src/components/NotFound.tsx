@@ -4,7 +4,7 @@ import { Home, AlertTriangle, Sparkles, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 relative overflow-hidden'>
+    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 relative overflow-hidden' suppressHydrationWarning>
       {/* 装饰性背景元素 */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
         {/* 大圆形渐变 */}
@@ -65,11 +65,11 @@ export default function NotFound() {
             </Button>
           </Link>
           
-          <Button 
-            variant='outline' 
+          <Button
+            variant='outline'
             size='lg'
             className='gap-2 px-6 h-12 rounded-full border-2 hover:bg-muted transition-all text-base font-medium'
-            onClick={() => window.history.back()}
+            onClick={() => typeof window !== 'undefined' && window.history.back()}
           >
             <ArrowLeft className='w-5 h-5' />
             返回上一页

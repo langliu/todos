@@ -1,5 +1,4 @@
 import { createServerFn } from '@tanstack/react-start'
-import { redirect } from '@tanstack/react-router'
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabase.server'
 
 export const signUp = createServerFn({ method: 'POST' })
@@ -40,11 +39,13 @@ export const signIn = createServerFn({ method: 'POST' })
     return { error: null }
   })
 
-export const signOut = createServerFn({ method: 'POST' }).handler(async () => {
-  const supabase = createServerSupabaseClient()
-  await supabase.auth.signOut()
-  throw redirect({ href: '/auth/login' })
-})
+export const signOut = createServerFn({ method: 'POST' })
+  .inputValidator((_input?: unknown) => _input)
+  .handler(async () => {
+    const supabase = createServerSupabaseClient()
+    await supabase.auth.signOut()
+    return { success: true }
+  })
 
 export const getCurrentUser = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -58,3 +59,24 @@ export const getCurrentUser = createServerFn({ method: 'GET' }).handler(
     }
   }
 )
+
+export const updatePassword = createServerFn({ method: 'POST' })
+  .inputValidator((input: { currentPassword: string; newPassword: string }) => input)
+  .handler(async ({ data }) => {
+    const supabase = createServerSupabaseClient()
+    const user = await getServerUser()
+
+    if (!user) {
+      return { error: '用户未登录' }
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: data.newPassword,
+    })
+
+    if (error) {
+      return { error: error.message }
+    }
+
+    return { error: null }
+  })
