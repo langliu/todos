@@ -118,10 +118,7 @@ function AuthPage() {
 
             <div className='text-center text-sm text-muted-foreground'>
               还没有账户？
-              <Link
-                to='/auth/sign-up'
-                className='ml-1 text-primary hover:underline font-medium'
-              >
+              <Link to='/auth/sign-up' className='ml-1 text-primary hover:underline font-medium'>
                 立即注册
               </Link>
             </div>

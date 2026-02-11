@@ -26,39 +26,151 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const subtasksQueryKey: ['subtasks', string] = ['subtasks', todoId]
 
   const createSubtaskMutation = useMutation({
     mutationFn: createSubtask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', todoId] })
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: subtasksQueryKey })
+
+      const previousSubtasks = queryClient.getQueryData<Subtask[]>(subtasksQueryKey) || []
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const now = new Date().toISOString()
+      const optimisticSubtask: Subtask = {
+        id: tempId,
+        todo_id: todoId,
+        title: variables.data.data.title,
+        completed: false,
+        order: variables.data.data.order || previousSubtasks.length,
+        created_at: now,
+        updated_at: now,
+      }
+
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, [
+        ...previousSubtasks,
+        optimisticSubtask,
+      ])
+
+      return { previousSubtasks, tempId }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      queryClient.setQueryData(subtasksQueryKey, context.previousSubtasks)
+    },
+    onSuccess: (createdSubtask, _variables, context) => {
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) => {
+        const replacedSubtasks = currentSubtasks.map((subtask) =>
+          subtask.id === context?.tempId ? createdSubtask : subtask,
+        )
+        const hasCreatedSubtask = replacedSubtasks.some(
+          (subtask) => subtask.id === createdSubtask.id,
+        )
+        return hasCreatedSubtask ? replacedSubtasks : [...replacedSubtasks, createdSubtask]
+      })
     },
   })
 
   const updateSubtaskMutation = useMutation({
     mutationFn: updateSubtask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', todoId] })
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: subtasksQueryKey })
+
+      const previousSubtasks = queryClient.getQueryData<Subtask[]>(subtasksQueryKey) || []
+
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks.map((subtask) =>
+          subtask.id === variables.data.id ? { ...subtask, ...variables.data.data } : subtask,
+        ),
+      )
+
+      return { previousSubtasks }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      queryClient.setQueryData(subtasksQueryKey, context.previousSubtasks)
+    },
+    onSuccess: (updatedSubtask) => {
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks.map((subtask) =>
+          subtask.id === updatedSubtask.id ? updatedSubtask : subtask,
+        ),
+      )
     },
   })
 
   const deleteSubtaskMutation = useMutation({
     mutationFn: deleteSubtask,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', todoId] })
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: subtasksQueryKey })
+
+      const previousSubtasks = queryClient.getQueryData<Subtask[]>(subtasksQueryKey) || []
+
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks.filter((subtask) => subtask.id !== variables.data.id),
+      )
+
+      return { previousSubtasks }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      queryClient.setQueryData(subtasksQueryKey, context.previousSubtasks)
     },
   })
 
   const toggleSubtaskMutation = useMutation({
     mutationFn: toggleSubtaskCompleted,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', todoId] })
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: subtasksQueryKey })
+
+      const previousSubtasks = queryClient.getQueryData<Subtask[]>(subtasksQueryKey) || []
+
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks.map((subtask) =>
+          subtask.id === variables.data.id
+            ? { ...subtask, completed: variables.data.completed }
+            : subtask,
+        ),
+      )
+
+      return { previousSubtasks }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      queryClient.setQueryData(subtasksQueryKey, context.previousSubtasks)
+    },
+    onSuccess: (updatedSubtask) => {
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks.map((subtask) =>
+          subtask.id === updatedSubtask.id ? updatedSubtask : subtask,
+        ),
+      )
     },
   })
 
   const reorderSubtasksMutation = useMutation({
     mutationFn: reorderSubtasks,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subtasks', todoId] })
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: subtasksQueryKey })
+
+      const previousSubtasks = queryClient.getQueryData<Subtask[]>(subtasksQueryKey) || []
+      const orderMap = new Map(
+        variables.data.subtasks.map((subtask) => [subtask.id, subtask.order]),
+      )
+
+      queryClient.setQueryData<Subtask[]>(subtasksQueryKey, (currentSubtasks = []) =>
+        currentSubtasks
+          .map((subtask) => {
+            const nextOrder = orderMap.get(subtask.id)
+            return nextOrder === undefined ? subtask : { ...subtask, order: nextOrder }
+          })
+          .sort((a, b) => a.order - b.order),
+      )
+
+      return { previousSubtasks }
+    },
+    onError: (_error, _variables, context) => {
+      if (!context) return
+      queryClient.setQueryData(subtasksQueryKey, context.previousSubtasks)
     },
   })
 
@@ -110,7 +222,7 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
           setEditingSubtaskId(null)
           setEditValue('')
         },
-      }
+      },
     )
   }
 
@@ -147,30 +259,24 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="space-y-3">
+    <div className='space-y-3'>
       {totalCount > 0 && (
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+        <div className='flex items-center gap-3'>
+          <div className='flex-1 h-2 bg-muted rounded-full overflow-hidden'>
             <div
-              className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full"
+              className='h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full'
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-xs font-medium text-muted-foreground shrink-0">
+          <span className='text-xs font-medium text-muted-foreground shrink-0'>
             {completedCount}/{totalCount}
           </span>
         </div>
       )}
 
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={subtasks.map((s) => s.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-2">
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={subtasks.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <div className='space-y-2'>
             {subtasks.map((subtask) => (
               <SubtaskItem
                 key={subtask.id}
@@ -190,19 +296,19 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
       </DndContext>
 
       {!readOnly && (
-        <form onSubmit={handleAddSubtask} className="flex gap-2">
+        <form onSubmit={handleAddSubtask} className='flex gap-2'>
           <Input
-            placeholder="添加子任务..."
+            placeholder='添加子任务...'
             value={newSubtaskTitle}
             onChange={(e) => setNewSubtaskTitle(e.target.value)}
-            className="flex-1 h-10 px-4 text-sm rounded-xl border-2 border-border bg-card focus:border-primary/30"
+            className='flex-1 h-10 px-4 text-sm rounded-xl border-2 border-border bg-card focus:border-primary/30'
           />
           <Button
-            type="submit"
+            type='submit'
             disabled={!newSubtaskTitle.trim()}
-            className="h-10 px-4 rounded-xl gap-2"
+            className='h-10 px-4 rounded-xl gap-2'
           >
-            <Plus className="h-4 w-4" />
+            <Plus className='h-4 w-4' />
           </Button>
         </form>
       )}

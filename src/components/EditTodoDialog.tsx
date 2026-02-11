@@ -105,9 +105,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
 
   const handleToggleTag = (tagId: string) => {
     setSelectedTagIds((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     )
   }
 
@@ -118,7 +116,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
         onSuccess: (tag) => {
           setSelectedTagIds((prev) => [...prev, tag.id])
         },
-      }
+      },
     )
   }
 

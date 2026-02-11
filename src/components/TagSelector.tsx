@@ -43,14 +43,14 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
   }
 
   return (
-    <div className="space-y-3">
-      <Label className="text-sm font-medium">标签</Label>
+    <div className='space-y-3'>
+      <Label className='text-sm font-medium'>标签</Label>
 
       {isCreating && (
-        <div className="p-4 rounded-2xl bg-muted/50 border border-border/60 space-y-3">
-          <div className="flex items-center gap-2">
+        <div className='p-4 rounded-2xl bg-muted/50 border border-border/60 space-y-3'>
+          <div className='flex items-center gap-2'>
             <Input
-              placeholder="标签名称"
+              placeholder='标签名称'
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value)}
               onKeyDown={(e) => {
@@ -60,27 +60,27 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
                   handleCancelCreate()
                 }
               }}
-              className="flex-1 h-10 rounded-xl text-sm"
+              className='flex-1 h-10 rounded-xl text-sm'
               autoFocus
             />
             <Button
-              type="button"
-              size="icon"
-              variant="ghost"
+              type='button'
+              size='icon'
+              variant='ghost'
               onClick={handleCancelCreate}
-              className="h-10 w-10 flex-shrink-0 rounded-xl"
+              className='h-10 w-10 flex-shrink-0 rounded-xl'
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">选择颜色</Label>
-            <div className="flex gap-2 flex-wrap">
+          <div className='space-y-2'>
+            <Label className='text-xs text-muted-foreground'>选择颜色</Label>
+            <div className='flex gap-2 flex-wrap'>
               {PRESET_COLORS.map((color) => (
                 <button
                   key={color}
-                  type="button"
+                  type='button'
                   onClick={() => setSelectedColor(color)}
                   className={`w-6 h-6 rounded-full transition-all ${
                     selectedColor === color
@@ -94,28 +94,26 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
           </div>
 
           <Button
-            type="button"
+            type='button'
             onClick={handleCreateTag}
             disabled={!newTagName.trim()}
-            className="w-full h-10 rounded-xl"
+            className='w-full h-10 rounded-xl'
           >
             创建标签
           </Button>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className='flex flex-wrap gap-2'>
         {tags.map((tag) => {
           const isSelected = selectedTagIds.includes(tag.id)
           return (
             <button
               key={tag.id}
-              type="button"
+              type='button'
               onClick={() => onToggleTag(tag.id)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
-                isSelected
-                  ? 'ring-2 ring-offset-1 ring-ring'
-                  : 'opacity-70 hover:opacity-100'
+                isSelected ? 'ring-2 ring-offset-1 ring-ring' : 'opacity-70 hover:opacity-100'
               }`}
               style={{
                 backgroundColor: `${tag.color}20`,
@@ -123,17 +121,13 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
                 border: `1px solid ${tag.color}40`,
               }}
             >
-              <span className="max-w-[120px] truncate">{tag.name}</span>
+              <span className='max-w-[120px] truncate'>{tag.name}</span>
               {isSelected && (
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+                <svg className='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 20 20'>
                   <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
+                    fillRule='evenodd'
+                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                    clipRule='evenodd'
                   />
                 </svg>
               )}
@@ -144,13 +138,13 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
 
       {!isCreating && (
         <Button
-          type="button"
-          variant="outline"
-          size="sm"
+          type='button'
+          variant='outline'
+          size='sm'
           onClick={() => setIsCreating(true)}
-          className="w-full h-10 rounded-xl border-dashed"
+          className='w-full h-10 rounded-xl border-dashed'
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className='h-4 w-4 mr-2' />
           创建新标签
         </Button>
       )}

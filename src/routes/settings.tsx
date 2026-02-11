@@ -56,7 +56,13 @@ function SettingsPage() {
   }
 
   const passwordStrength = getPasswordStrength(newPassword)
-  const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-500', 'bg-emerald-600']
+  const strengthColors = [
+    'bg-red-500',
+    'bg-orange-500',
+    'bg-yellow-500',
+    'bg-emerald-500',
+    'bg-emerald-600',
+  ]
   const strengthLabels = ['弱', '较弱', '中等', '强', '很强']
 
   const isLengthValid = newPassword.length >= 6
@@ -100,10 +106,12 @@ function SettingsPage() {
     <div className='min-h-screen bg-gradient-to-br from-background to-muted/30 p-4 md:p-8'>
       <div className='max-w-2xl mx-auto pt-4 md:pt-8'>
         <div className='flex items-center gap-4 mb-8'>
-          <Link to='/'>
-            <Button variant='ghost' size='icon' className='h-10 w-10 rounded-xl hover:bg-accent/50 transition-colors'>
-              <ArrowLeft className='h-5 w-5' />
-            </Button>
+          <Link
+            to='/'
+            aria-label='返回首页'
+            className='h-10 w-10 rounded-xl hover:bg-accent/50 transition-colors inline-flex items-center justify-center'
+          >
+            <ArrowLeft className='h-5 w-5' />
           </Link>
           <div className='flex items-center gap-3'>
             <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
@@ -191,7 +199,9 @@ function SettingsPage() {
                   <div className='mt-3 space-y-2'>
                     <div className='flex items-center justify-between'>
                       <span className='text-xs text-muted-foreground'>密码强度</span>
-                      <span className={`text-xs font-medium ${passwordStrength >= 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                      <span
+                        className={`text-xs font-medium ${passwordStrength >= 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                      >
                         {strengthLabels[passwordStrength]}
                       </span>
                     </div>
@@ -224,7 +234,9 @@ function SettingsPage() {
                   className='h-11 rounded-xl border-2 border-border bg-background focus:border-primary/50 focus:bg-background/80 transition-all'
                 />
                 {confirmPassword && (
-                  <div className={`flex items-center gap-2 mt-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
+                  <div
+                    className={`flex items-center gap-2 mt-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                  >
                     {isMatch ? <Check className='h-3.5 w-3.5' /> : <X className='h-3.5 w-3.5' />}
                     <span>{isMatch ? '密码匹配' : '密码不匹配'}</span>
                   </div>
@@ -234,16 +246,34 @@ function SettingsPage() {
               <div className='bg-muted/50 rounded-xl p-4 space-y-3 border border-border/40'>
                 <p className='text-sm font-semibold text-foreground'>密码要求</p>
                 <ul className='space-y-2'>
-                  <li className={`flex items-center gap-2 text-xs ${isLengthValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
-                    {isLengthValid ? <Check className='h-3.5 w-3.5 flex-shrink-0' /> : <X className='h-3.5 w-3.5 flex-shrink-0' />}
+                  <li
+                    className={`flex items-center gap-2 text-xs ${isLengthValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                  >
+                    {isLengthValid ? (
+                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                    ) : (
+                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                    )}
                     <span>至少 6 个字符</span>
                   </li>
-                  <li className={`flex items-center gap-2 text-xs ${isDifferent ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
-                    {isDifferent ? <Check className='h-3.5 w-3.5 flex-shrink-0' /> : <X className='h-3.5 w-3.5 flex-shrink-0' />}
+                  <li
+                    className={`flex items-center gap-2 text-xs ${isDifferent ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                  >
+                    {isDifferent ? (
+                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                    ) : (
+                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                    )}
                     <span>不能与当前密码相同</span>
                   </li>
-                  <li className={`flex items-center gap-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
-                    {isMatch ? <Check className='h-3.5 w-3.5 flex-shrink-0' /> : <X className='h-3.5 w-3.5 flex-shrink-0' />}
+                  <li
+                    className={`flex items-center gap-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                  >
+                    {isMatch ? (
+                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                    ) : (
+                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                    )}
                     <span>两次输入的密码一致</span>
                   </li>
                 </ul>

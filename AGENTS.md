@@ -5,6 +5,7 @@
 ## 沟通语言
 
 **重要**: 所有 AI 助手必须使用中文进行所有沟通、回复和解释。这包括：
+
 - 与用户的所有消息
 - 代码解释和注释
 - 文档和描述
@@ -35,7 +36,7 @@ bun tsc --noEmit                         # 类型检查
 
 ## 项目结构
 
-```
+```text
 src/
 ├── components/       # React 组件
 │   └── ui/         # shadcn/ui 基础 UI 组件
@@ -208,14 +209,14 @@ import { zhCN } from 'date-fns/locale'
 
 ## 命名约定
 
-| 类型                | 约定          | 示例                      |
-| ------------------- | ------------- | ------------------------- |
-| 组件 (Components)   | PascalCase    | `Header`, `TodoList`       |
-| 函数/变量           | camelCase     | `getTodos`, `isLoading`   |
-| CSS 类名           | kebab-case    | `nav-item`, `App-header`   |
-| 组件文件           | PascalCase.tsx| `Header.tsx`, `TodoItem.tsx` |
-| 路由文件           | kebab-case.tsx| `start.server-funcs.tsx` |
-| 数据/工具文件       | kebab-case.ts | `demo.punk-songs.ts`      |
+| 类型              | 约定           | 示例                         |
+| ----------------- | -------------- | ---------------------------- |
+| 组件 (Components) | PascalCase     | `Header`, `TodoList`         |
+| 函数/变量         | camelCase      | `getTodos`, `isLoading`      |
+| CSS 类名          | kebab-case     | `nav-item`, `App-header`     |
+| 组件文件          | PascalCase.tsx | `Header.tsx`, `TodoItem.tsx` |
+| 路由文件          | kebab-case.tsx | `start.server-funcs.tsx`     |
+| 数据/工具文件     | kebab-case.ts  | `demo.punk-songs.ts`         |
 
 ## CSS 样式
 
@@ -248,7 +249,7 @@ async function readData() {
 
 使用 Conventional Commits 规范，提交消息格式如下：
 
-```
+```text
 <类型>(<范围>): <描述>
 
 [可选的正文]
@@ -258,20 +259,21 @@ async function readData() {
 
 ### 类型（Type）
 
-| 类型       | 描述                     | 示例                                 |
-| ---------- | ------------------------ | ------------------------------------ |
-| `feat`     | 新功能                   | feat: 添加设置页面和修改密码功能      |
-| `fix`      | 修复 Bug                 | fix: 修复退出登录后无法重定向的问题   |
-| `docs`     | 文档变更                 | docs: 更新 README 使用说明           |
-| `style`    | 代码格式调整（不影响逻辑）| style: 统一代码缩进格式              |
-| `refactor`| 重构代码                 | refactor: 重构认证中间件逻辑          |
-| `perf`     | 性能优化                 | perf: 优化组件渲染性能               |
-| `test`     | 测试相关                 | test: 添加用户认证测试用例           |
-| `chore`    | 构建/工具链相关          | chore: 更新依赖包版本                |
+| 类型       | 描述                       | 示例                                |
+| ---------- | -------------------------- | ----------------------------------- |
+| `feat`     | 新功能                     | feat: 添加设置页面和修改密码功能    |
+| `fix`      | 修复 Bug                   | fix: 修复退出登录后无法重定向的问题 |
+| `docs`     | 文档变更                   | docs: 更新 README 使用说明          |
+| `style`    | 代码格式调整（不影响逻辑） | style: 统一代码缩进格式             |
+| `refactor` | 重构代码                   | refactor: 重构认证中间件逻辑        |
+| `perf`     | 性能优化                   | perf: 优化组件渲染性能              |
+| `test`     | 测试相关                   | test: 添加用户认证测试用例          |
+| `chore`    | 构建/工具链相关            | chore: 更新依赖包版本               |
 
 ### 范围（Scope）
 
 可选的，用于指定 commit 影响的范围：
+
 - `auth`: 认证相关
 - `ui`: UI 组件
 - `api`: API 接口
@@ -446,3 +448,7 @@ export const getTodos = createServerFn({ method: 'GET' })
 1. **用户要求提交**: AI 按规范生成提交信息并执行 `git commit`
 2. **用户未要求**: AI 完成代码任务后，停止工作，不执行任何提交操作
 3. **检查代码质量**: 提交前建议运行类型检查和测试（如果可用）
+
+## 格式化
+
+- 在每次代码变更后执行 `bun fmt` 进行代码格式化

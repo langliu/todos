@@ -89,10 +89,7 @@ export const deleteSubtask = createServerFn({ method: 'POST' })
   .handler(async ({ context, data: inputData }): Promise<void> => {
     const { supabase } = context as AuthContext
 
-    const { error } = await supabase
-      .from('subtasks')
-      .delete()
-      .eq('id', inputData.id)
+    const { error } = await supabase.from('subtasks').delete().eq('id', inputData.id)
 
     if (error) {
       throw new Error(error.message)
@@ -101,18 +98,42 @@ export const deleteSubtask = createServerFn({ method: 'POST' })
 
 export const reorderSubtasks = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
-  .inputValidator((input: { todoId: string; subtasks: Array<{ id: string; order: number }> }) => input)
+  .inputValidator(
+    (input: { todoId: string; subtasks: Array<{ id: string; order: number }> }) => input,
+  )
   .handler(async ({ context, data: inputData }): Promise<void> => {
     const { supabase } = context as AuthContext
 
-    const updates = inputData.subtasks.map(({ id, order }) =>
-      supabase
-        .from('subtasks')
-        .update({ order })
-        .eq('id', id)
+    if (inputData.subtasks.length === 0) {
+      return
+    }
+
+    const subtaskIds = inputData.subtasks.map((subtask) => subtask.id)
+
+    const { count, error: countError } = await supabase
+      .from('subtasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('todo_id', inputData.todoId)
+      .in('id', subtaskIds)
+
+    if (countError) {
+      throw new Error(countError.message)
+    }
+
+    if (count !== subtaskIds.length) {
+      throw new Error('子任务列表已发生变化，请刷新后重试')
+    }
+
+    const results = await Promise.all(
+      inputData.subtasks.map(({ id, order }) =>
+        supabase.from('subtasks').update({ order }).eq('id', id).eq('todo_id', inputData.todoId),
+      ),
     )
 
-    await Promise.all(updates)
+    const failedResult = results.find((result) => result.error)
+    if (failedResult?.error) {
+      throw new Error(failedResult.error.message)
+    }
   })
 
 export const toggleSubtaskCompleted = createServerFn({ method: 'POST' })

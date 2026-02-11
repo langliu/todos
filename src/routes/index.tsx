@@ -1,21 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { TodoItem } from '@/components/TodoItem'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { AddTodoDialog } from '@/components/AddTodoDialog'
-import { EditTodoDialog } from '@/components/EditTodoDialog'
-import {
-  getTodos,
-  createTodo,
-  updateTodo,
-  deleteTodo,
-} from '@/data/todos.server'
+import { getTodos, createTodo, updateTodo, deleteTodo } from '@/data/todos.server'
 import { getCurrentUser, signOut } from '@/data/auth.server'
 import { getTags } from '@/data/tags.server'
-import type { Todo, Tag } from '@/lib/supabase'
-import type { UpdateTodoInput } from '@/data/todos.server'
+import type { Todo } from '@/lib/supabase'
+import type { TodoListItem, UpdateTodoInput } from '@/data/todos.server'
 import {
   Sun,
   Star,
@@ -29,6 +22,16 @@ import {
   Settings,
   Tag as TagIcon,
 } from 'lucide-react'
+
+const LazyAddTodoDialog = lazy(async () => {
+  const module = await import('@/components/AddTodoDialog')
+  return { default: module.AddTodoDialog }
+})
+
+const LazyEditTodoDialog = lazy(async () => {
+  const module = await import('@/components/EditTodoDialog')
+  return { default: module.EditTodoDialog }
+})
 
 export const Route = createFileRoute('/')({
   component: TodosPage,
@@ -46,7 +49,7 @@ function TodosPage() {
   const [selectedList, setSelectedList] = useState('my-day')
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
-  const [todos, setTodos] = useState<Todo[]>(initialTodos)
+  const [todos, setTodos] = useState<TodoListItem[]>(initialTodos)
 
   const { data: tags = [] } = useQuery({
     queryKey: ['tags'],
@@ -55,18 +58,39 @@ function TodosPage() {
 
   const createMutation = useMutation({
     mutationFn: createTodo,
-    onSuccess: (result) => {
-      setTodos(prev => [result, ...prev])
+    onSuccess: (result, variables) => {
+      const selectedTags = tags.filter((tag) => variables.data.tagIds?.includes(tag.id))
+      setTodos((prev) => [
+        {
+          ...result,
+          tags: selectedTags,
+          subtask_count: 0,
+          subtask_completed_count: 0,
+        },
+        ...prev,
+      ])
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: updateTodo,
     onSuccess: (result, variables) => {
-      setTodos(prev =>
-        prev.map(todo =>
-          todo.id === variables.data.id ? result : todo
-        )
+      setTodos((prev) =>
+        prev.map((todo) => {
+          if (todo.id !== variables.data.id) {
+            return todo
+          }
+
+          const nextTagIds = variables.data.data.tagIds
+          const nextTags =
+            nextTagIds === undefined ? todo.tags : tags.filter((tag) => nextTagIds.includes(tag.id))
+
+          return {
+            ...todo,
+            ...result,
+            tags: nextTags,
+          }
+        }),
       )
     },
   })
@@ -74,7 +98,7 @@ function TodosPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteTodo,
     onSuccess: (_result, variables) => {
-      setTodos(prev => prev.filter(todo => todo.id !== variables.data.id))
+      setTodos((prev) => prev.filter((todo) => todo.id !== variables.data.id))
     },
   })
 
@@ -102,7 +126,12 @@ function TodosPage() {
     setEditingTodo(todo)
   }
 
-  const handleUpdate = (id: string, data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+  const handleUpdate = (
+    id: string,
+    data: Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>> & {
+      tagIds?: string[]
+    },
+  ) => {
     const updateData: UpdateTodoInput = {
       ...data,
       description: data.description || undefined,
@@ -115,14 +144,11 @@ function TodosPage() {
   }
 
   const filteredTodos = useMemo(() => {
-    return todos.filter((todo: Todo) => {
-      const matchesSearch = todo.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+    return todos.filter((todo) => {
+      const matchesSearch = todo.title.toLowerCase().includes(searchQuery.toLowerCase())
 
       if (selectedTagId) {
-        const todoTags = queryClient.getQueryData<Tag[]>(['todoTags', todo.id]) || []
-        const hasTag = todoTags.some((tag) => tag.id === selectedTagId)
+        const hasTag = todo.tags.some((tag) => tag.id === selectedTagId)
         if (!hasTag) return false
       }
 
@@ -139,17 +165,49 @@ function TodosPage() {
           return matchesSearch
       }
     })
-  }, [todos, searchQuery, selectedList, selectedTagId, queryClient])
+  }, [todos, searchQuery, selectedList, selectedTagId])
 
-  const myDayTodos = todos.filter((t: Todo) => !t.completed)
-  const importantTodos = todos.filter((t: Todo) => t.important && !t.completed)
-  const plannedTodos = todos.filter((t: Todo) => t.due_date && !t.completed)
-  const allTodos = todos.filter((t: Todo) => !t.completed)
+  const listCounts = useMemo(() => {
+    let myDay = 0
+    let important = 0
+    let planned = 0
+    let tasks = 0
+
+    for (const todo of todos) {
+      if (todo.completed) {
+        continue
+      }
+
+      tasks += 1
+      myDay += 1
+
+      if (todo.important) {
+        important += 1
+      }
+
+      if (todo.due_date) {
+        planned += 1
+      }
+    }
+
+    return {
+      myDay,
+      important,
+      planned,
+      tasks,
+    }
+  }, [todos])
+  const selectedTag = useMemo(
+    () => tags.find((tag) => tag.id === selectedTagId) || null,
+    [selectedTagId, tags],
+  )
 
   const getListTitle = () => {
+    if (selectedTag) {
+      return `标签: ${selectedTag.name}`
+    }
     if (selectedTagId) {
-      const selectedTag = tags.find((tag) => tag.id === selectedTagId)
-      return selectedTag ? `标签: ${selectedTag.name}` : '标签'
+      return '标签'
     }
     switch (selectedList) {
       case 'my-day':
@@ -167,28 +225,28 @@ function TodosPage() {
 
   const getListIcon = () => {
     if (selectedTagId) {
-      return <TagIcon className="h-7 w-7" />
+      return <TagIcon className='h-7 w-7' />
     }
     switch (selectedList) {
       case 'my-day':
-        return <Sun className="h-7 w-7" />
+        return <Sun className='h-7 w-7' />
       case 'important':
-        return <Star className="h-7 w-7" />
+        return <Star className='h-7 w-7' />
       case 'planned':
-        return <Calendar className="h-7 w-7" />
+        return <Calendar className='h-7 w-7' />
       case 'tasks':
-        return <Home className="h-7 w-7" />
+        return <Home className='h-7 w-7' />
       default:
-        return <Sun className="h-7 w-7" />
+        return <Sun className='h-7 w-7' />
     }
   }
 
-  const getListGradient = () => {
+  const getListGradientClass = () => {
+    if (selectedTag) {
+      return ''
+    }
     if (selectedTagId) {
-      const selectedTag = tags.find((tag) => tag.id === selectedTagId)
-      return selectedTag
-        ? `from-[${selectedTag.color}] to-[${selectedTag.color}80]`
-        : 'from-gray-400 to-gray-500'
+      return 'from-gray-400 to-gray-500'
     }
     switch (selectedList) {
       case 'my-day':
@@ -201,6 +259,16 @@ function TodosPage() {
         return 'from-teal-500 to-emerald-500'
       default:
         return 'from-orange-400 to-amber-400'
+    }
+  }
+
+  const getListGradientStyle = (): React.CSSProperties | undefined => {
+    if (!selectedTag) {
+      return undefined
+    }
+
+    return {
+      backgroundImage: `linear-gradient(135deg, ${selectedTag.color}, ${selectedTag.color}cc)`,
     }
   }
 
@@ -235,78 +303,76 @@ function TodosPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <aside className="w-72 bg-sidebar border-r flex flex-col">
-        <div className="p-6 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2">
-              <CheckCircle2 className="h-5 w-5 text-white" />
+    <div className='flex h-screen bg-background overflow-hidden'>
+      <aside className='w-72 bg-sidebar border-r flex flex-col'>
+        <div className='p-6 border-b'>
+          <div className='flex items-center gap-3'>
+            <div className='w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
+              <CheckCircle2 className='h-5 w-5 text-white' />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">
-                To Do
-              </h1>
-              <p className="text-xs text-muted-foreground">高效任务管理</p>
+              <h1 className='text-xl font-bold text-sidebar-foreground tracking-tight'>To Do</h1>
+              <p className='text-xs text-muted-foreground'>高效任务管理</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className='flex-1 p-4 space-y-1'>
           <SidebarItem
-            icon={<Sun className="h-5 w-5" />}
-            label="我的一天"
-            count={myDayTodos.length}
+            icon={<Sun className='h-5 w-5' />}
+            label='我的一天'
+            count={listCounts.myDay}
             active={selectedList === 'my-day' && !selectedTagId}
             onClick={() => {
               setSelectedList('my-day')
               setSelectedTagId(null)
             }}
-            gradient="from-orange-400 to-amber-400"
+            gradient='from-orange-400 to-amber-400'
           />
           <SidebarItem
-            icon={<Star className="h-5 w-5" />}
-            label="重要"
-            count={importantTodos.length}
+            icon={<Star className='h-5 w-5' />}
+            label='重要'
+            count={listCounts.important}
             active={selectedList === 'important' && !selectedTagId}
             onClick={() => {
               setSelectedList('important')
               setSelectedTagId(null)
             }}
-            gradient="from-red-500 to-pink-500"
+            gradient='from-red-500 to-pink-500'
           />
           <SidebarItem
-            icon={<Calendar className="h-5 w-5" />}
-            label="已计划日程"
-            count={plannedTodos.length}
+            icon={<Calendar className='h-5 w-5' />}
+            label='已计划日程'
+            count={listCounts.planned}
             active={selectedList === 'planned' && !selectedTagId}
             onClick={() => {
               setSelectedList('planned')
               setSelectedTagId(null)
             }}
-            gradient="from-blue-500 to-indigo-500"
+            gradient='from-blue-500 to-indigo-500'
           />
           <SidebarItem
-            icon={<Home className="h-5 w-5" />}
-            label="任务"
-            count={allTodos.length}
+            icon={<Home className='h-5 w-5' />}
+            label='任务'
+            count={listCounts.tasks}
             active={selectedList === 'tasks' && !selectedTagId}
             onClick={() => {
               setSelectedList('tasks')
               setSelectedTagId(null)
             }}
-            gradient="from-teal-500 to-emerald-500"
+            gradient='from-teal-500 to-emerald-500'
           />
 
           {tags.length > 0 && (
-            <div className="pt-4 border-t border-border/60">
-              <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className='pt-4 border-t border-border/60'>
+              <p className='px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
                 标签
               </p>
-              <div className="space-y-1">
+              <div className='space-y-1'>
                 {tags.map((tag) => (
                   <button
                     key={tag.id}
-                    type="button"
+                    type='button'
                     onClick={() => {
                       setSelectedTagId(tag.id)
                       setSelectedList('tasks')
@@ -317,31 +383,30 @@ function TodosPage() {
                         : 'hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                      selectedTagId === tag.id
-                        ? 'bg-gradient-to-br shadow-elevation-1'
-                        : 'bg-muted/50 text-muted-foreground'
-                    }`}
-                    style={{
-                      backgroundColor: selectedTagId === tag.id ? tag.color : undefined,
-                      color: selectedTagId === tag.id ? 'white' : tag.color,
-                    }}
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                        selectedTagId === tag.id
+                          ? 'bg-gradient-to-br shadow-elevation-1'
+                          : 'bg-muted/50 text-muted-foreground'
+                      }`}
+                      style={{
+                        backgroundColor: selectedTagId === tag.id ? tag.color : undefined,
+                        color: selectedTagId === tag.id ? 'white' : tag.color,
+                      }}
                     >
-                      <TagIcon className="h-4 w-4" />
+                      <TagIcon className='h-4 w-4' />
                     </div>
-                    <span className="flex-1 text-left truncate">{tag.name}</span>
+                    <span className='flex-1 text-left truncate'>{tag.name}</span>
                   </button>
                 ))}
-                <Link to="/tags">
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground"
-                  >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 text-muted-foreground">
-                      <Settings className="h-4 w-4" />
-                    </div>
-                    <span className="flex-1 text-left">管理标签</span>
-                  </button>
+                <Link
+                  to='/tags'
+                  className='w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground'
+                >
+                  <div className='w-9 h-9 rounded-xl flex items-center justify-center bg-muted/50 text-muted-foreground'>
+                    <Settings className='h-4 w-4' />
+                  </div>
+                  <span className='flex-1 text-left'>管理标签</span>
                 </Link>
               </div>
             </div>
@@ -349,89 +414,99 @@ function TodosPage() {
         </nav>
 
         {user && (
-          <div className="p-4 border-t bg-muted/50">
-            <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-sidebar/50">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm shadow-elevation-1">
-                {user.email?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+          <div className='p-4 border-t bg-muted/50'>
+            <div className='flex items-center gap-3 px-3 py-3 rounded-2xl bg-sidebar/50'>
+              <div className='w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-sm shadow-elevation-1'>
+                {user.email?.charAt(0).toUpperCase() || <User className='h-4 w-4' />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {user.email}
-                </p>
+              <div className='flex-1 min-w-0'>
+                <p className='text-sm font-medium text-sidebar-foreground truncate'>{user.email}</p>
               </div>
-              <Link to="/settings">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex-shrink-0 h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
+              <Link
+                to='/settings'
+                aria-label='打开设置'
+                className='flex-shrink-0 h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors inline-flex items-center justify-center'
+              >
+                <Settings className='h-4 w-4' />
               </Link>
               <Button
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors"
+                variant='ghost'
+                size='icon'
+                className='flex-shrink-0 h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors'
                 onClick={() => signOutMutation.mutate({ data: undefined })}
                 disabled={signOutMutation.isPending}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className='h-4 w-4' />
               </Button>
             </div>
           </div>
         )}
       </aside>
 
-      <main className="flex-1 flex flex-col min-w-0 bg-background">
-        <header className="h-20 border-b bg-card/80 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getListGradient()} flex items-center justify-center shadow-elevation-2`}>
+      <main className='flex-1 flex flex-col min-w-0 bg-background'>
+        <header className='h-20 border-b bg-card/80 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-10'>
+          <div className='flex items-center gap-4'>
+            <div
+              className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${getListGradientClass()} flex items-center justify-center shadow-elevation-2`}
+              style={getListGradientStyle()}
+            >
               {getListIcon()}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              <h1 className='text-2xl font-bold text-foreground tracking-tight'>
                 {getListTitle()}
               </h1>
               <ClientDate />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <AddTodoDialog
-              onAdd={(todo) => {
-                createMutation.mutate({ data: todo })
-              }}
-            />
+          <div className='flex items-center gap-3'>
+            <Suspense
+              fallback={
+                <Button
+                  className='gap-2 h-11 px-6 rounded-2xl bg-linear-to-r from-primary to-secondary transition-all shadow-elevation-2 font-semibold'
+                  disabled
+                >
+                  添加任务
+                </Button>
+              }
+            >
+              <LazyAddTodoDialog
+                onAdd={(todo) => {
+                  createMutation.mutate({ data: todo })
+                }}
+              />
+            </Suspense>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-8">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <div className='flex-1 overflow-auto p-8'>
+          <div className='max-w-4xl mx-auto space-y-6'>
+            <div className='relative'>
+              <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground' />
               <Input
-                placeholder="搜索任务..."
+                placeholder='搜索任务...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-12 pl-12 pr-4 text-base rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all"
+                className='h-12 pl-12 pr-4 text-base rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all'
               />
             </div>
 
-            <div className="bg-card rounded-3xl border border-border shadow-elevation-2 overflow-hidden">
+            <div className='bg-card rounded-3xl border border-border shadow-elevation-2 overflow-hidden'>
               {filteredTodos.length === 0 ? (
-                <EmptyState
-                  icon={getListIcon()}
-                  {...getEmptyStateMessage()}
-                />
+                <EmptyState icon={getListIcon()} {...getEmptyStateMessage()} />
               ) : (
-                <div className="divide-y divide-border/60">
-                  {filteredTodos.map((todo: Todo, index: number) => (
+                <div className='divide-y divide-border/60'>
+                  {filteredTodos.map((todo, index: number) => (
                     <div
                       key={todo.id}
-                      className="animate-slide-up"
+                      className='animate-slide-up'
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
                       <TodoItem
                         todo={todo}
+                        tags={todo.tags}
+                        subtaskCount={todo.subtask_count}
+                        subtaskCompletedCount={todo.subtask_completed_count}
                         onToggle={handleToggle}
                         onToggleImportant={handleToggleImportant}
                         onDelete={handleDelete}
@@ -444,7 +519,7 @@ function TodosPage() {
             </div>
 
             {filteredTodos.length > 0 && (
-              <p className="text-center text-sm text-muted-foreground py-2">
+              <p className='text-center text-sm text-muted-foreground py-2'>
                 共 {filteredTodos.length} 个任务
               </p>
             )}
@@ -453,12 +528,14 @@ function TodosPage() {
       </main>
 
       {editingTodo && (
-        <EditTodoDialog
-          todo={editingTodo}
-          open={!!editingTodo}
-          onOpenChange={(open) => !open && setEditingTodo(null)}
-          onUpdate={handleUpdate}
-        />
+        <Suspense fallback={null}>
+          <LazyEditTodoDialog
+            todo={editingTodo}
+            open={!!editingTodo}
+            onOpenChange={(open) => !open && setEditingTodo(null)}
+            onUpdate={handleUpdate}
+          />
+        </Suspense>
       )}
     </div>
   )
@@ -476,7 +553,7 @@ interface SidebarItemProps {
 function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarItemProps) {
   return (
     <button
-      type="button"
+      type='button'
       onClick={onClick}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer ${
         active
@@ -484,22 +561,24 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
           : 'hover:bg-sidebar-accent/50 text-muted-foreground hover:text-foreground'
       }`}
     >
-      <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-          active
-            ? `bg-gradient-to-br ${gradient} text-white shadow-elevation-1`
-            : 'bg-muted/50 text-muted-foreground'
-        }`}>
+      <div className='flex items-center gap-3'>
+        <div
+          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+            active
+              ? `bg-gradient-to-br ${gradient} text-white shadow-elevation-1`
+              : 'bg-muted/50 text-muted-foreground'
+          }`}
+        >
           {icon}
         </div>
         <span>{label}</span>
       </div>
       {count > 0 && (
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full transition-all ${
-          active
-            ? 'bg-primary/20 text-primary'
-            : 'bg-muted/50 text-muted-foreground'
-        }`}>
+        <span
+          className={`text-xs font-bold px-2.5 py-1 rounded-full transition-all ${
+            active ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground'
+          }`}
+        >
           {count}
         </span>
       )}
@@ -515,18 +594,14 @@ interface EmptyStateProps {
 
 function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
-    <div className="text-center py-20 px-8 animate-fade-in">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/60 mb-6 shadow-elevation-1">
+    <div className='text-center py-20 px-8 animate-fade-in'>
+      <div className='inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/60 mb-6 shadow-elevation-1'>
         {icon}
       </div>
-      <h3 className="text-xl font-semibold text-foreground mb-2">
-        {title}
-      </h3>
-      <p className="text-muted-foreground mb-8">
-        {subtitle}
-      </p>
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <Sparkles className="h-4 w-4 text-primary" />
+      <h3 className='text-xl font-semibold text-foreground mb-2'>{title}</h3>
+      <p className='text-muted-foreground mb-8'>{subtitle}</p>
+      <div className='flex items-center justify-center gap-2 text-sm text-muted-foreground'>
+        <Sparkles className='h-4 w-4 text-primary' />
         <span>点击右上角按钮添加任务</span>
       </div>
     </div>
@@ -544,13 +619,9 @@ function ClientDate() {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
-      })
+      }),
     )
   }, [])
 
-  return (
-    <span className="text-sm text-muted-foreground font-medium">
-      {mounted ? date : ''}
-    </span>
-  )
+  return <span className='text-sm text-muted-foreground font-medium'>{mounted ? date : ''}</span>
 }

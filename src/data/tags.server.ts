@@ -20,6 +20,14 @@ type AuthContext = {
   supabase: SupabaseClient
 }
 
+type TodoTagQueryRow = {
+  tags: Tag | Tag[] | null
+}
+
+type TagWithCountQueryRow = Tag & {
+  todo_tags?: Array<{ count: number | null }> | null
+}
+
 export const getTags = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<Tag[]> => {
@@ -88,11 +96,7 @@ export const deleteTag = createServerFn({ method: 'POST' })
   .handler(async ({ context, data }): Promise<void> => {
     const { supabase, userId } = context as AuthContext
 
-    const { error } = await supabase
-      .from('tags')
-      .delete()
-      .eq('id', data.id)
-      .eq('user_id', userId)
+    const { error } = await supabase.from('tags').delete().eq('id', data.id).eq('user_id', userId)
 
     if (error) {
       throw new Error(error.message)
@@ -114,7 +118,13 @@ export const getTodoTags = createServerFn({ method: 'GET' })
       throw new Error(error.message)
     }
 
-    return (data?.map((item: any) => item.tags).filter(Boolean) || []) as Tag[]
+    return ((data || []) as TodoTagQueryRow[]).flatMap((item) => {
+      if (!item.tags) {
+        return []
+      }
+
+      return Array.isArray(item.tags) ? item.tags : [item.tags]
+    })
   })
 
 export const addTagToTodo = createServerFn({ method: 'POST' })
@@ -123,12 +133,10 @@ export const addTagToTodo = createServerFn({ method: 'POST' })
   .handler(async ({ context, data: inputData }): Promise<void> => {
     const { supabase } = context as AuthContext
 
-    const { error } = await supabase
-      .from('todo_tags')
-      .insert({
-        todo_id: inputData.todoId,
-        tag_id: inputData.tagId,
-      })
+    const { error } = await supabase.from('todo_tags').insert({
+      todo_id: inputData.todoId,
+      tag_id: inputData.tagId,
+    })
 
     if (error) {
       throw new Error(error.message)
@@ -168,12 +176,12 @@ export const updateTodoTags = createServerFn({ method: 'POST' })
     }
 
     if (inputData.tagIds.length > 0) {
-      const { error: insertError } = await supabase
-        .from('todo_tags')
-        .insert(inputData.tagIds.map(tagId => ({
+      const { error: insertError } = await supabase.from('todo_tags').insert(
+        inputData.tagIds.map((tagId) => ({
           todo_id: inputData.todoId,
           tag_id: tagId,
-        })))
+        })),
+      )
 
       if (insertError) {
         throw new Error(insertError.message)
@@ -199,9 +207,8 @@ export const getTagsWithCounts = createServerFn({ method: 'GET' })
       throw new Error(error.message)
     }
 
-    return (data || []).map((tag: any) => ({
+    return ((data || []) as TagWithCountQueryRow[]).map((tag) => ({
       ...tag,
       todo_count: tag.todo_tags?.[0]?.count || 0,
     }))
   })
-

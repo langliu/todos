@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import type { Todo } from '@/lib/supabase'
+import type { Tag, Todo } from '@/lib/supabase'
 import { authMiddleware } from '@/lib/auth'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
@@ -28,23 +28,88 @@ type AuthContext = {
   supabase: SupabaseClient
 }
 
+export type TodoListItem = Todo & {
+  tags: Tag[]
+  subtask_count: number
+  subtask_completed_count: number
+}
+
+type CompletedSubtaskCountRow = {
+  todo_id: string
+  completed_count: number | string | null
+}
+
 export const getTodos = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<Todo[]> => {
+  .handler(async ({ context }): Promise<TodoListItem[]> => {
     const { supabase, userId } = context as AuthContext
 
-    const { data, error } = await supabase
+    const { data: todosData, error: todosError } = await supabase
       .from('todos')
-      .select('*')
+      .select(`
+        *,
+        todo_tags (
+          tags (*)
+        ),
+        subtasks(count)
+      `)
       .eq('user_id', userId)
       .order('important', { ascending: false })
       .order('created_at', { ascending: false })
 
-    if (error) {
-      throw new Error(error.message)
+    if (todosError) {
+      throw new Error(todosError.message)
     }
 
-    return data || []
+    type TodoQueryRow = Todo & {
+      todo_tags?: Array<{ tags: Tag | null }> | null
+      subtasks?: Array<{ count: number | null }> | null
+    }
+
+    const todoRows = (todosData || []) as TodoQueryRow[]
+    const todoIds = todoRows.map((row) => row.id)
+
+    const completedCountByTodoId = new Map<string, number>()
+    if (todoIds.length > 0) {
+      const { data: completedRows, error: completedError } = await supabase.rpc(
+        'get_completed_subtask_counts',
+        {
+          p_todo_ids: todoIds,
+        },
+      )
+
+      if (completedError) {
+        throw new Error(completedError.message)
+      }
+
+      for (const row of (completedRows || []) as CompletedSubtaskCountRow[]) {
+        completedCountByTodoId.set(row.todo_id, Number(row.completed_count || 0))
+      }
+    }
+
+    return todoRows.map((row) => {
+      const tags = (row.todo_tags || [])
+        .map((item) => item.tags)
+        .filter((tag): tag is Tag => Boolean(tag))
+
+      const subtaskCount = row.subtasks?.[0]?.count || 0
+      const subtaskCompletedCount = completedCountByTodoId.get(row.id) || 0
+
+      return {
+        id: row.id,
+        user_id: row.user_id,
+        title: row.title,
+        description: row.description,
+        completed: row.completed,
+        important: row.important,
+        due_date: row.due_date,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        tags,
+        subtask_count: subtaskCount,
+        subtask_completed_count: subtaskCompletedCount,
+      }
+    })
   })
 
 export const createTodo = createServerFn({ method: 'POST' })
@@ -119,11 +184,7 @@ export const deleteTodo = createServerFn({ method: 'POST' })
   .handler(async ({ context, data }): Promise<void> => {
     const { supabase, userId } = context as AuthContext
 
-    const { error } = await supabase
-      .from('todos')
-      .delete()
-      .eq('id', data.id)
-      .eq('user_id', userId)
+    const { error } = await supabase.from('todos').delete().eq('id', data.id).eq('user_id', userId)
 
     if (error) {
       throw new Error(error.message)

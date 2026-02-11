@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -12,19 +13,40 @@ import {
   FieldSeparator,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
+import { signUp } from '@/data/auth.server'
 
 export const Route = createFileRoute('/auth/sign-up')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
   })
+
+  const signUpMutation = useMutation({
+    mutationFn: signUp,
+    onSuccess: (result) => {
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+
+      if (result.needsConfirmation) {
+        toast.success('注册成功，请前往邮箱确认完成注册。')
+        return
+      }
+
+      toast.success('注册成功，您现在可以登录。')
+    },
+    onError: () => {
+      toast.error('注册失败，请重试')
+    },
+  })
+
+  const isLoading = signUpMutation.isPending
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target
@@ -56,35 +78,18 @@ function RouteComponent() {
     return true
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) return
 
-    setIsLoading(true)
-
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+    signUpMutation.mutate({
+      data: {
         email: formData.email,
         password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (signUpError) {
-        throw signUpError
-      }
-
-      if (data.user) {
-        toast.success('注册成功，请前往邮箱确认完成注册。')
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '注册失败，请重试'
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
   }
 
   return (

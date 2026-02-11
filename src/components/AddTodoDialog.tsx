@@ -93,9 +93,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
 
   const handleToggleTag = (tagId: string) => {
     setSelectedTagIds((prev) =>
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     )
   }
 
@@ -106,7 +104,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
         onSuccess: (tag) => {
           setSelectedTagIds((prev) => [...prev, tag.id])
         },
-      }
+      },
     )
   }
 

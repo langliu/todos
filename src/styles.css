@@ -215,7 +215,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
- :root {
+:root {
   --radius: 0.875rem;
   --background: #fafcfc;
   --foreground: #0a1f1d;
@@ -253,7 +253,7 @@
   --sidebar-ring: #6366f1;
 }
 
- .dark {
+.dark {
   --radius: 0.875rem;
   --background: #0a1623;
   --foreground: #e0e7ff;
