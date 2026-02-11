@@ -66,147 +66,151 @@ export function TodoItem({
   const hasSubtasks = totalSubtasks > 0
 
   return (
-    <div className='group flex items-center gap-4 p-5 bg-card hover:bg-muted/40 transition-all duration-200 cursor-pointer'>
-      <div className='shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground'>
-        <GripVertical className='h-4 w-4' />
-      </div>
-
-      <div className='shrink-0'>
-        <Checkbox
-          checked={todo.completed}
-          onCheckedChange={(checked) => onToggle(todo.id, checked as boolean)}
-          className='h-5.5 w-5.5 rounded-full border-2 border-muted-foreground/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all shadow-sm'
-        />
-      </div>
-
-      <div className='flex-1 min-w-0 py-1.5'>
-        <p
-          className={`font-medium truncate transition-all duration-200 ${
-            todo.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-          }`}
-        >
-          {todo.title}
-        </p>
-        {todo.description && (
-          <p
-            className={`text-sm truncate mt-1 transition-all duration-200 ${
-              todo.completed ? 'text-muted-foreground/50' : 'text-muted-foreground'
-            }`}
-          >
-            {todo.description}
-          </p>
-        )}
-        {todo.due_date && (
-          <div
-            className={`flex items-center gap-1.5 mt-2 text-xs font-medium transition-all duration-200 ${
-              todo.completed
-                ? 'text-muted-foreground/40'
-                : overdue
-                  ? 'text-destructive bg-destructive/10 px-2 py-0.5 rounded-full inline-flex'
-                  : 'text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full inline-flex'
-            }`}
-          >
-            <Calendar className='h-3 w-3' />
-            <span>
-              {new Date(todo.due_date).toLocaleDateString('zh-CN', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </span>
-            {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
-          </div>
-        )}
-        {tags.length > 0 && (
-          <div className='flex flex-wrap gap-1.5 mt-2'>
-            {tags.map((tag) => (
-              <TagBadge key={tag.id} tag={tag} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {hasSubtasks ? (
-        <div className='mr-auto'>
-          <button
-            type='button'
-            onClick={() => setIsExpanded(!isExpanded)}
-            className='flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors'
-          >
-            {isExpanded ? (
-              <ChevronDown className='h-3.5 w-3.5' />
-            ) : (
-              <ChevronRight className='h-3.5 w-3.5' />
-            )}
-            <span>
-              {completedSubtasks}/{totalSubtasks} 子任务
-            </span>
-          </button>
+    <article className='group rounded-2xl border border-border/75 bg-card/65 shadow-elevation-1 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-elevation-2'>
+      <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5'>
+        <div className='hidden shrink-0 text-muted-foreground/60 transition-opacity sm:block sm:opacity-0 sm:group-hover:opacity-100'>
+          <GripVertical className='h-4 w-4' />
         </div>
-      ) : !isExpanded ? (
-        <button
-          type='button'
-          onClick={() => setIsExpanded(true)}
-          className='mr-auto text-xs font-medium text-muted-foreground hover:text-primary transition-colors'
-        >
-          + 添加子任务
-        </button>
-      ) : null}
 
-      <div className='flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200'>
-        <Button
-          variant='ghost'
-          size='icon'
-          className={`h-9 w-9 rounded-xl transition-all duration-200 ${
-            todo.important
-              ? 'text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20'
-              : 'text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10'
-          }`}
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggleImportant(todo.id, !todo.important)
-          }}
-        >
-          <Star
-            className={`h-4 w-4 transition-transform duration-200 ${
-              todo.important ? 'fill-current scale-110' : ''
-            }`}
-          />
-        </Button>
+        <div className='flex items-start gap-3 sm:contents'>
+          <div className='shrink-0 pt-0.5 sm:pt-0'>
+            <Checkbox
+              checked={todo.completed}
+              onCheckedChange={(checked) => onToggle(todo.id, checked as boolean)}
+              className='h-5.5 w-5.5 rounded-full border-2 border-muted-foreground/45 shadow-sm transition-all data-[state=checked]:border-primary data-[state=checked]:bg-primary'
+            />
+          </div>
 
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-9 w-9 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200'
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(todo)
-          }}
-        >
-          <Pencil className='h-4 w-4' />
-        </Button>
+          <div className='min-w-0 flex-1 py-0.5 sm:py-1'>
+            <p
+              className={`truncate text-[0.97rem] font-medium leading-6 transition-all duration-200 ${
+                todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+              }`}
+            >
+              {todo.title}
+            </p>
+            {todo.description && (
+              <p
+                className={`mt-1 truncate text-sm transition-all duration-200 ${
+                  todo.completed ? 'text-muted-foreground/50' : 'text-muted-foreground'
+                }`}
+              >
+                {todo.description}
+              </p>
+            )}
+            {todo.due_date && (
+              <div
+                className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium transition-all duration-200 ${
+                  todo.completed
+                    ? 'text-muted-foreground/45'
+                    : overdue
+                      ? 'bg-destructive/15 text-destructive'
+                      : 'bg-muted/55 text-muted-foreground'
+                }`}
+              >
+                <Calendar className='h-3 w-3' />
+                <span>
+                  {new Date(todo.due_date).toLocaleDateString('zh-CN', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+                {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
+              </div>
+            )}
+            {tags.length > 0 && (
+              <div className='mt-2 flex flex-wrap gap-1.5'>
+                {tags.map((tag) => (
+                  <TagBadge key={tag.id} tag={tag} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200'
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(todo.id)
-          }}
-        >
-          <Trash2 className='h-4 w-4' />
-        </Button>
+        <div className='flex items-center justify-between gap-3 sm:ml-auto sm:justify-end'>
+          {hasSubtasks ? (
+            <button
+              type='button'
+              onClick={() => setIsExpanded(!isExpanded)}
+              className='inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/35 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/35 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+            >
+              {isExpanded ? (
+                <ChevronDown className='h-3.5 w-3.5' />
+              ) : (
+                <ChevronRight className='h-3.5 w-3.5' />
+              )}
+              <span>
+                {completedSubtasks}/{totalSubtasks} 子任务
+              </span>
+            </button>
+          ) : !isExpanded ? (
+            <button
+              type='button'
+              onClick={() => setIsExpanded(true)}
+              className='rounded-full border border-dashed border-border/80 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/35 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+            >
+              + 添加子任务
+            </button>
+          ) : (
+            <span className='hidden sm:block' />
+          )}
+
+          <div className='flex items-center gap-1.5 opacity-100 transition-all duration-200 sm:opacity-0 sm:group-hover:opacity-100'>
+            <Button
+              variant='ghost'
+              size='icon'
+              className={`h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+                todo.important
+                  ? 'bg-yellow-500/15 text-yellow-500 hover:bg-yellow-500/25'
+                  : 'text-muted-foreground hover:bg-yellow-500/15 hover:text-yellow-500'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleImportant(todo.id, !todo.important)
+              }}
+            >
+              <Star
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  todo.important ? 'fill-current scale-110' : ''
+                }`}
+              />
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/15 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(todo)
+              }}
+            >
+              <Pencil className='h-4 w-4' />
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-destructive/15 hover:text-destructive focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none'
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(todo.id)
+              }}
+            >
+              <Trash2 className='h-4 w-4' />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {isExpanded && (
-        <div className='ml-10 mr-12 mt-3 mb-1'>
-          <Suspense
-            fallback={<div className='py-2 text-xs text-muted-foreground'>加载子任务中...</div>}
-          >
+        <div className='border-t border-border/65 px-4 pb-3 pt-2 sm:px-5'>
+          <Suspense fallback={<div className='py-2 text-xs text-muted-foreground'>加载子任务中...</div>}>
             <LazySubtaskList todoId={todo.id} subtasks={subtasks} />
           </Suspense>
         </div>
       )}
-    </div>
+    </article>
   )
 }

@@ -8,11 +8,11 @@ interface TagBadgeProps {
 export function TagBadge({ tag, onRemove }: TagBadgeProps) {
   return (
     <div
-      className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105'
+      className='inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5'
       style={{
-        backgroundColor: `${tag.color}20`,
+        backgroundColor: `${tag.color}18`,
         color: tag.color,
-        border: `1px solid ${tag.color}40`,
+        borderColor: `${tag.color}4d`,
       }}
     >
       <span className='max-w-[120px] truncate'>{tag.name}</span>
@@ -20,7 +20,7 @@ export function TagBadge({ tag, onRemove }: TagBadgeProps) {
         <button
           type='button'
           onClick={onRemove}
-          className='hover:bg-black/10 rounded p-0.5 transition-colors'
+          className='rounded p-0.5 transition-colors hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none'
         >
           <svg
             className='w-3 h-3'
