@@ -55,3 +55,24 @@ export type UpdateTagInput = {
   name?: string
   color?: string
 }
+
+export type Subtask = {
+  id: string
+  todo_id: string
+  title: string
+  completed: boolean
+  order: number
+  created_at: string
+  updated_at: string
+}
+
+export type CreateSubtaskInput = {
+  title: string
+  order?: number
+}
+
+export type UpdateSubtaskInput = {
+  title?: string
+  completed?: boolean
+  order?: number
+}

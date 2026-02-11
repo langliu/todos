@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { Star, Trash2, Calendar, GripVertical, Pencil } from 'lucide-react'
+import { Star, Trash2, Calendar, GripVertical, Pencil, ChevronDown, ChevronRight } from 'lucide-react'
 import type { Todo } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import { getTodoTags } from '@/data/tags.server'
+import { getSubtasks } from '@/data/subtasks.server'
 import { TagBadge } from './TagBadge'
+import { SubtaskList } from './SubtaskList'
 
 interface TodoItemProps {
   todo: Todo
@@ -23,11 +26,20 @@ function isOverdue(dueDate: string): boolean {
 }
 
 export function TodoItem({ todo, onToggle, onToggleImportant, onDelete, onEdit }: TodoItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const overdue = todo.due_date ? isOverdue(todo.due_date) : false
   const { data: tags = [] } = useQuery({
     queryKey: ['todoTags', todo.id],
     queryFn: () => getTodoTags({ data: { todoId: todo.id } }),
   })
+  const { data: subtasks = [] } = useQuery({
+    queryKey: ['subtasks', todo.id],
+    queryFn: () => getSubtasks({ data: { todoId: todo.id } }),
+  })
+
+  const completedSubtasks = subtasks.filter((s) => s.completed).length
+  const totalSubtasks = subtasks.length
+  const hasSubtasks = totalSubtasks > 0
 
   return (
     <div className='group flex items-center gap-4 p-5 bg-card hover:bg-muted/40 transition-all duration-200 cursor-pointer'>
@@ -77,17 +89,44 @@ export function TodoItem({ todo, onToggle, onToggleImportant, onDelete, onEdit }
                  day: 'numeric',
                })}
              </span>
-             {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
-           </div>
-         )}
-         {tags.length > 0 && (
-           <div className='flex flex-wrap gap-1.5 mt-2'>
-             {tags.map((tag) => (
-               <TagBadge key={tag.id} tag={tag} />
-             ))}
-           </div>
-         )}
-      </div>
+              {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
+            </div>
+           )}
+           {tags.length > 0 && (
+             <div className='flex flex-wrap gap-1.5 mt-2'>
+               {tags.map((tag) => (
+                 <TagBadge key={tag.id} tag={tag} />
+               ))}
+             </div>
+           )}
+        </div>
+
+       {hasSubtasks ? (
+         <div className="mr-auto">
+           <button
+             type="button"
+             onClick={() => setIsExpanded(!isExpanded)}
+             className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+           >
+             {isExpanded ? (
+               <ChevronDown className="h-3.5 w-3.5" />
+             ) : (
+               <ChevronRight className="h-3.5 w-3.5" />
+             )}
+             <span>
+               {completedSubtasks}/{totalSubtasks} 子任务
+             </span>
+           </button>
+         </div>
+       ) : !isExpanded ? (
+         <button
+           type="button"
+           onClick={() => setIsExpanded(true)}
+           className="mr-auto text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+         >
+           + 添加子任务
+         </button>
+       ) : null}
 
       <div className='flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200'>
         <Button
@@ -122,18 +161,24 @@ export function TodoItem({ todo, onToggle, onToggleImportant, onDelete, onEdit }
           <Pencil className='h-4 w-4' />
         </Button>
 
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200'
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete(todo.id)
-          }}
-        >
-          <Trash2 className='h-4 w-4' />
-        </Button>
-      </div>
-    </div>
-  )
-}
+         <Button
+           variant='ghost'
+           size='icon'
+           className='h-9 w-9 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200'
+           onClick={(e) => {
+             e.stopPropagation()
+             onDelete(todo.id)
+           }}
+         >
+           <Trash2 className='h-4 w-4' />
+         </Button>
+       </div>
+
+       {isExpanded && (
+         <div className="ml-10 mr-12 mt-3 mb-1">
+           <SubtaskList todoId={todo.id} subtasks={subtasks} />
+         </div>
+       )}
+     </div>
+   )
+ }
