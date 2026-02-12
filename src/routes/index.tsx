@@ -7,6 +7,7 @@ import {
   Home,
   Search,
   CheckCircle2,
+  BellRing,
   LogOut,
   User,
   Sparkles,
@@ -14,6 +15,7 @@ import {
   Tag as TagIcon,
 } from 'lucide-react'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 import type { TodoListType, UpdateTodoInput } from '@/data/todos.server'
 import type { Todo } from '@/lib/supabase'
@@ -25,6 +27,7 @@ import { signOut } from '@/data/auth.server'
 import { getTags } from '@/data/tags.server'
 import {
   getTodoListCounts,
+  getDueTodoReminders,
   getTodosPageData,
   getTodos,
   createTodo,
@@ -32,6 +35,7 @@ import {
   deleteTodo,
   TODOS_PAGE_SIZE,
 } from '@/data/todos.server'
+import { formatReminderDescription } from '@/lib/todo-reminder'
 
 const LazyAddTodoDialog = lazy(async () => {
   const module = await import('@/components/AddTodoDialog')
@@ -42,6 +46,8 @@ const LazyEditTodoDialog = lazy(async () => {
   const module = await import('@/components/EditTodoDialog')
   return { default: module.EditTodoDialog }
 })
+
+const REMINDER_STORAGE_KEY = 'todo-reminder-notified-v1'
 
 export const Route = createFileRoute('/')({
   component: TodosPage,
@@ -62,12 +68,18 @@ function TodosPage() {
   const [selectedList, setSelectedList] = useState<TodoListType>('my-day')
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
+  const [isClient, setIsClient] = useState(false)
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermission>('default')
   const todoListScrollRef = useRef<HTMLDivElement | null>(null)
   const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
+  const notifiedReminderKeysRef = useRef<Set<string>>(new Set())
   const todosQueryKey = ['todos', selectedList, deferredSearchQuery, selectedTagId] as const
   const tagsQueryKey = ['tags'] as const
   const countsQueryKey = ['todo-list-counts'] as const
+  const remindersQueryKey = ['due-todo-reminders'] as const
   const useInitialTodosData = selectedList === 'my-day' && !selectedTagId && !deferredSearchQuery
+  const hasNotificationApi = isClient && typeof window !== 'undefined' && 'Notification' in window
 
   const {
     data: todosPagesData,
@@ -104,6 +116,27 @@ function TodosPage() {
     placeholderData: (previousData) => previousData,
   })
   const todos = useMemo(() => todosPagesData?.pages.flat() || [], [todosPagesData])
+
+  useEffect(() => {
+    setIsClient(true)
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const rawKeys = localStorage.getItem(REMINDER_STORAGE_KEY)
+      if (rawKeys) {
+        const keys = JSON.parse(rawKeys) as string[]
+        notifiedReminderKeysRef.current = new Set(keys)
+      }
+    } catch {
+      notifiedReminderKeysRef.current = new Set()
+    }
+
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission)
+    }
+  }, [])
 
   useEffect(() => {
     const root = todoListScrollRef.current
@@ -144,11 +177,99 @@ function TodosPage() {
     initialData: initialCounts,
   })
 
+  const { data: dueReminders = [] } = useQuery({
+    queryKey: remindersQueryKey,
+    queryFn: async () =>
+      await getDueTodoReminders({
+        data: {
+          lookbackSeconds: 600,
+        },
+      }),
+    enabled: isClient,
+    staleTime: 0,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+  })
+
+  useEffect(() => {
+    if (!isClient || dueReminders.length === 0) {
+      return
+    }
+
+    let hasNewReminder = false
+    for (const reminder of dueReminders) {
+      if (!reminder.due_date) {
+        continue
+      }
+
+      const reminderKey = `${reminder.id}:${reminder.remind_at}`
+      if (notifiedReminderKeysRef.current.has(reminderKey)) {
+        continue
+      }
+
+      hasNewReminder = true
+      notifiedReminderKeysRef.current.add(reminderKey)
+      const description = formatReminderDescription(
+        reminder.due_date,
+        reminder.reminder_minutes_before,
+      )
+
+      toast.info(`任务提醒：${reminder.title}`, {
+        description,
+        duration: 8000,
+      })
+
+      if (notificationPermission === 'granted' && 'Notification' in window) {
+        try {
+          new Notification('任务提醒', {
+            body: `${reminder.title}\n${description}`,
+            tag: reminderKey,
+          })
+        } catch {
+          // 忽略浏览器不支持的通知参数错误
+        }
+      }
+    }
+
+    if (!hasNewReminder) {
+      return
+    }
+
+    const latestReminderKeys = Array.from(notifiedReminderKeysRef.current).slice(-300)
+    notifiedReminderKeysRef.current = new Set(latestReminderKeys)
+    try {
+      localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(latestReminderKeys))
+    } catch {
+      // 忽略隐私模式下的存储异常
+    }
+  }, [dueReminders, isClient, notificationPermission])
+
+  const handleEnableNotifications = async () => {
+    if (!hasNotificationApi) {
+      toast.error('当前浏览器不支持系统通知')
+      return
+    }
+
+    if (notificationPermission === 'denied') {
+      toast.error('通知权限已禁用，请在浏览器设置中手动开启')
+      return
+    }
+
+    const permission = await Notification.requestPermission()
+    setNotificationPermission(permission)
+    if (permission === 'granted') {
+      toast.success('提醒通知已开启')
+      return
+    }
+    toast.error('未开启系统通知，将仅在页面内提示')
+  }
+
   const createMutation = useMutation({
     mutationFn: createTodo,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['todos'] })
       void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
+      void queryClient.invalidateQueries({ queryKey: remindersQueryKey })
     },
   })
 
@@ -157,6 +278,7 @@ function TodosPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['todos'] })
       void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
+      void queryClient.invalidateQueries({ queryKey: remindersQueryKey })
     },
   })
 
@@ -165,6 +287,7 @@ function TodosPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['todos'] })
       void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
+      void queryClient.invalidateQueries({ queryKey: remindersQueryKey })
     },
   })
 
@@ -200,8 +323,15 @@ function TodosPage() {
   ) => {
     const updateData: UpdateTodoInput = {
       ...data,
-      description: data.description || undefined,
-      due_date: data.due_date || undefined,
+    }
+    if ('description' in data) {
+      updateData.description = data.description ?? null
+    }
+    if ('due_date' in data) {
+      updateData.due_date = data.due_date ?? null
+    }
+    if ('reminder_minutes_before' in data) {
+      updateData.reminder_minutes_before = data.reminder_minutes_before ?? null
     }
     updateMutation.mutate({
       data: { id, data: updateData },
@@ -477,6 +607,16 @@ function TodosPage() {
             </div>
           </div>
           <div className='flex items-center gap-3'>
+            {hasNotificationApi && notificationPermission !== 'granted' && (
+              <Button
+                variant='outline'
+                onClick={() => void handleEnableNotifications()}
+                className='border-primary/30 text-primary hover:bg-primary/10 h-11 gap-2 rounded-2xl px-4'
+              >
+                <BellRing className='h-4 w-4' />
+                开启提醒
+              </Button>
+            )}
             <Suspense
               fallback={
                 <Button

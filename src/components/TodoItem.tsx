@@ -3,6 +3,7 @@ import {
   Star,
   Trash2,
   Calendar,
+  BellRing,
   GripVertical,
   Pencil,
   ChevronDown,
@@ -15,6 +16,7 @@ import type { Tag, Todo } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { getSubtasks } from '@/data/subtasks.server'
+import { formatReminderLabel } from '@/lib/todo-reminder'
 
 import { TagBadge } from './TagBadge'
 
@@ -119,6 +121,12 @@ export function TodoItem({
                   })}
                 </span>
                 {overdue && !todo.completed && <span className='ml-1'>已逾期</span>}
+              </div>
+            )}
+            {todo.due_date && todo.reminder_minutes_before !== null && (
+              <div className='bg-muted/55 text-muted-foreground mt-2 ml-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium'>
+                <BellRing className='h-3 w-3' />
+                <span>{formatReminderLabel(todo.reminder_minutes_before)}</span>
               </div>
             )}
             {tags.length > 0 && (

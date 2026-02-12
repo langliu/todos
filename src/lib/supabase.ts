@@ -17,6 +17,7 @@ export type Todo = {
   completed: boolean
   important: boolean
   due_date: string | null
+  reminder_minutes_before: number | null
   created_at: string
   updated_at: string
 }
@@ -26,6 +27,7 @@ export type CreateTodoInput = {
   description?: string
   due_date?: string
   important?: boolean
+  reminder_minutes_before?: number | null
 }
 
 export type UpdateTodoInput = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>

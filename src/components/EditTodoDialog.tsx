@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { Sparkles, Calendar as CalendarIcon } from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon, BellRing } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 import type { Todo } from '@/lib/supabase'
@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
 import { getTags, createTag, getTodoTags } from '@/data/tags.server'
+import { TODO_REMINDER_OPTIONS } from '@/lib/todo-reminder'
 import { cn } from '@/lib/utils'
 
 import { TagSelector } from './TagSelector'
@@ -43,6 +44,9 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
     todo.due_date ? new Date(todo.due_date) : undefined,
   )
   const [important, setImportant] = useState(todo.important)
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState<number | null>(
+    todo.reminder_minutes_before,
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
@@ -73,6 +77,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
       setDescription(todo.description || '')
       setDueDate(todo.due_date ? new Date(todo.due_date) : undefined)
       setImportant(todo.important)
+      setReminderMinutesBefore(todo.reminder_minutes_before)
     }
   }, [open, todo])
 
@@ -88,9 +93,10 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
 
     onUpdate(todo.id, {
       title: title.trim(),
-      description: description.trim() || undefined,
+      description: description.trim() || null,
       due_date: dueDate ? dueDate.toISOString() : null,
       important,
+      reminder_minutes_before: dueDate ? reminderMinutesBefore : null,
       tagIds: selectedTagIds,
     })
 
@@ -124,7 +130,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className='shadow-elevation-4 overflow-hidden rounded-3xl p-0 sm:max-w-125'>
+      <DialogContent className='shadow-elevation-4 overflow-hidden rounded-3xl p-0 sm:max-w-[44rem]'>
         <DialogHeader className='from-muted/60 border-b bg-linear-to-br to-transparent p-6 pb-4'>
           <div className='flex items-center gap-3'>
             <div className='from-primary to-secondary shadow-elevation-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br'>
@@ -196,6 +202,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
                 <div className='w-full'>
                   <Calendar
                     mode='single'
+                    locale={zhCN}
                     selected={dueDate}
                     onSelect={(date) => {
                       setDueDate(date)
@@ -204,9 +211,52 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
                     initialFocus
                     className='w-full rounded-2xl'
                   />
+                  <div className='mt-3 flex justify-end'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      className='h-8 rounded-lg px-3 text-xs'
+                      onClick={() => {
+                        setDueDate(undefined)
+                        setReminderMinutesBefore(null)
+                        setCalendarOpen(false)
+                      }}
+                    >
+                      清除日期
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-foreground flex items-center gap-2 text-sm font-semibold'>
+              <BellRing className='text-muted-foreground h-4 w-4' />
+              提醒时间 <span className='text-muted-foreground font-normal'>（可选）</span>
+            </Label>
+            <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
+              {TODO_REMINDER_OPTIONS.map((option) => {
+                const isActive = reminderMinutesBefore === option.value
+                const disabled = !dueDate && option.value !== null
+                return (
+                  <button
+                    key={option.label}
+                    type='button'
+                    disabled={disabled}
+                    onClick={() => setReminderMinutesBefore(option.value)}
+                    className={cn(
+                      'border-border bg-card text-muted-foreground hover:border-primary/35 hover:text-primary focus-visible:ring-primary/60 h-10 rounded-xl border text-xs font-medium transition-all focus-visible:ring-2 focus-visible:outline-none',
+                      isActive && 'border-primary/45 bg-primary/15 text-primary',
+                      disabled && 'cursor-not-allowed opacity-45',
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+            {!dueDate && <p className='text-muted-foreground text-xs'>请先选择截止日期</p>}
           </div>
 
           <div className='bg-muted/60 flex items-center gap-3 rounded-2xl p-4'>

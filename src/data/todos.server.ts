@@ -14,15 +14,17 @@ export type CreateTodoInput = {
   description?: string
   due_date?: string
   important?: boolean
+  reminder_minutes_before?: number | null
   tagIds?: string[]
 }
 
 export type UpdateTodoInput = {
   title?: string
-  description?: string
+  description?: string | null
   completed?: boolean
   important?: boolean
-  due_date?: string
+  due_date?: string | null
+  reminder_minutes_before?: number | null
   tagIds?: string[]
 }
 
@@ -69,6 +71,13 @@ export type TodosPageData = {
   user: TodoPageUser
 }
 
+export type DueTodoReminder = Pick<
+  Todo,
+  'id' | 'title' | 'due_date' | 'reminder_minutes_before'
+> & {
+  remind_at: string
+}
+
 type CompletedSubtaskCountRow = {
   todo_id: string
   completed_count: number | string | null
@@ -76,6 +85,21 @@ type CompletedSubtaskCountRow = {
 
 type TodoTagIdRow = {
   todo_id: string
+}
+
+type TodoListCountsRpcRow = {
+  my_day: number | string | null
+  important: number | string | null
+  planned: number | string | null
+  tasks: number | string | null
+}
+
+type DueTodoReminderRpcRow = {
+  id: string
+  title: string
+  due_date: string | null
+  reminder_minutes_before: number | string | null
+  remind_at: string | null
 }
 
 async function queryTodoList(
@@ -200,6 +224,7 @@ async function queryTodoList(
       completed: row.completed,
       important: row.important,
       due_date: row.due_date,
+      reminder_minutes_before: row.reminder_minutes_before,
       created_at: row.created_at,
       updated_at: row.updated_at,
       tags,
@@ -223,47 +248,30 @@ async function queryUserTags(supabase: SupabaseClient, userId: string): Promise<
   return data || []
 }
 
-async function queryTodoListCounts(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<TodoListCounts> {
-  const [tasksResult, importantResult, plannedResult] = await Promise.all([
-    supabase
-      .from('todos')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', false),
-    supabase
-      .from('todos')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', false)
-      .eq('important', true),
-    supabase
-      .from('todos')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('completed', false)
-      .not('due_date', 'is', null),
-  ])
-
-  if (tasksResult.error) {
-    throw new Error(tasksResult.error.message)
-  }
-  if (importantResult.error) {
-    throw new Error(importantResult.error.message)
-  }
-  if (plannedResult.error) {
-    throw new Error(plannedResult.error.message)
+async function queryTodoListCounts(supabase: SupabaseClient): Promise<TodoListCounts> {
+  const { data, error } = await supabase.rpc('get_todo_list_counts')
+  if (error) {
+    throw new Error(error.message)
   }
 
-  const tasks = tasksResult.count || 0
+  const row = ((data || [])[0] || null) as TodoListCountsRpcRow | null
+  const tasks = Number(row?.tasks || 0)
   return {
-    myDay: tasks,
+    myDay: Number(row?.my_day || tasks),
     tasks,
-    important: importantResult.count || 0,
-    planned: plannedResult.count || 0,
+    important: Number(row?.important || 0),
+    planned: Number(row?.planned || 0),
   }
+}
+
+function normalizeReminderMinutes(value: number | null | undefined): number | null | undefined {
+  if (value === null || value === undefined) {
+    return value
+  }
+  if (!Number.isFinite(value)) {
+    throw new Error('提醒时间不合法')
+  }
+  return Math.max(0, Math.floor(value))
 }
 
 export const getTodos = createServerFn({ method: 'GET' })
@@ -277,8 +285,37 @@ export const getTodos = createServerFn({ method: 'GET' })
 export const getTodoListCounts = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<TodoListCounts> => {
-    const { supabase, userId } = context as AuthContext
-    return queryTodoListCounts(supabase, userId)
+    const { supabase } = context as AuthContext
+    return queryTodoListCounts(supabase)
+  })
+
+export const getDueTodoReminders = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .inputValidator((input?: { lookbackSeconds?: number }) => input)
+  .handler(async ({ context, data }): Promise<DueTodoReminder[]> => {
+    const { supabase } = context as AuthContext
+    const lookbackSeconds =
+      typeof data?.lookbackSeconds === 'number' && Number.isFinite(data.lookbackSeconds)
+        ? Math.max(60, Math.min(Math.floor(data.lookbackSeconds), 3600))
+        : 300
+
+    const { data: reminderRows, error } = await supabase.rpc('get_due_todo_reminders', {
+      p_lookback_seconds: lookbackSeconds,
+    })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return ((reminderRows || []) as DueTodoReminderRpcRow[])
+      .filter((row) => row.due_date && row.remind_at)
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        due_date: row.due_date as string,
+        reminder_minutes_before: Number(row.reminder_minutes_before || 0),
+        remind_at: row.remind_at as string,
+      }))
   })
 
 export const getTodosPageData = createServerFn({ method: 'GET' })
@@ -288,7 +325,7 @@ export const getTodosPageData = createServerFn({ method: 'GET' })
     const [todos, tags, counts] = await Promise.all([
       queryTodoList(supabase, userId, { list: 'my-day', limit: TODOS_PAGE_SIZE, offset: 0 }),
       queryUserTags(supabase, userId),
-      queryTodoListCounts(supabase, userId),
+      queryTodoListCounts(supabase),
     ])
 
     return {
@@ -307,6 +344,7 @@ export const createTodo = createServerFn({ method: 'POST' })
   .inputValidator((input: CreateTodoInput) => input)
   .handler(async ({ context, data }): Promise<Todo> => {
     const { supabase, userId } = context as AuthContext
+    const reminderMinutesBefore = normalizeReminderMinutes(data.reminder_minutes_before)
 
     const { data: todo, error } = await supabase
       .from('todos')
@@ -316,6 +354,8 @@ export const createTodo = createServerFn({ method: 'POST' })
         description: data.description,
         important: data.important || false,
         due_date: data.due_date || null,
+        reminder_minutes_before:
+          data.due_date && reminderMinutesBefore !== undefined ? reminderMinutesBefore : null,
       })
       .select()
       .single()
@@ -338,6 +378,13 @@ export const updateTodo = createServerFn({ method: 'POST' })
     const { supabase, userId } = context as AuthContext
 
     const { tagIds, ...todoData } = inputData.data
+    const normalizedReminderMinutes = normalizeReminderMinutes(todoData.reminder_minutes_before)
+    if (todoData.reminder_minutes_before !== undefined) {
+      todoData.reminder_minutes_before = normalizedReminderMinutes
+    }
+    if (todoData.due_date === null) {
+      todoData.reminder_minutes_before = null
+    }
 
     const { data: todo, error } = await supabase
       .from('todos')
