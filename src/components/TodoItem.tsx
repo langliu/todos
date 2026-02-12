@@ -206,7 +206,9 @@ export function TodoItem({
 
       {isExpanded && (
         <div className='border-t border-border/65 px-4 pb-3 pt-2 sm:px-5'>
-          <Suspense fallback={<div className='py-2 text-xs text-muted-foreground'>加载子任务中...</div>}>
+          <Suspense
+            fallback={<div className='py-2 text-xs text-muted-foreground'>加载子任务中...</div>}
+          >
             <LazySubtaskList todoId={todo.id} subtasks={subtasks} />
           </Suspense>
         </div>

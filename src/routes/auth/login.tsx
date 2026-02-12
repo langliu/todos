@@ -1,17 +1,11 @@
 import { useState } from 'react'
 import { Link, createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { signIn, getCurrentUser } from '@/data/auth.server'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 
@@ -49,12 +43,12 @@ function AuthPage() {
     setError(null)
 
     if (!email || !password) {
-      setError('请填写邮箱和密码')
+      setError('请输入邮箱和密码')
       return
     }
 
     if (password.length < 6) {
-      setError('密码至少需要6个字符')
+      setError('密码至少需要 6 个字符')
       return
     }
 
@@ -62,69 +56,97 @@ function AuthPage() {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4'>
-      <Card className='w-full max-w-md'>
-        <CardHeader className='text-center'>
-          <div className='flex justify-center mb-4'>
-            <div className='flex items-center gap-2 text-2xl font-bold'>
-              <CheckCircle2 className='h-8 w-8 text-primary' />
-              <span>To Do</span>
-            </div>
-          </div>
-          <CardTitle className='text-xl'>欢迎回来</CardTitle>
-          <CardDescription>登录您的账户以继续</CardDescription>
-        </CardHeader>
+    <div className='bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10'>
+      <div className='w-full max-w-sm md:max-w-4xl'>
+        <div className={cn('flex flex-col gap-6')}>
+          <Card className='overflow-hidden p-0'>
+            <CardContent className='grid p-0 md:grid-cols-2'>
+              <form className='p-6 md:p-8' onSubmit={handleSubmit}>
+                <FieldGroup>
+                  <div className='flex flex-col items-center gap-2 text-center'>
+                    <div className='flex items-center gap-2 text-2xl font-bold'>
+                      <CheckCircle2 className='h-7 w-7 text-primary' />
+                      <span>To Do</span>
+                    </div>
+                    <h1 className='text-2xl font-bold'>欢迎回来</h1>
+                    <p className='text-muted-foreground text-sm text-balance'>
+                      输入邮箱和密码，继续管理你的待办事项
+                    </p>
+                  </div>
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className='space-y-4'>
-            {error && (
-              <div className='p-3 text-sm text-destructive bg-destructive/10 rounded-md'>
-                {error}
+                  {error && (
+                    <FieldDescription className='rounded-md bg-destructive/10 p-3 text-center text-destructive'>
+                      {error}
+                    </FieldDescription>
+                  )}
+
+                  <Field>
+                    <FieldLabel htmlFor='email'>邮箱地址</FieldLabel>
+                    <Input
+                      id='email'
+                      type='email'
+                      placeholder='you@example.com'
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                      autoComplete='email'
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor='password'>密码</FieldLabel>
+                    <Input
+                      id='password'
+                      type='password'
+                      placeholder='请输入密码'
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                      autoComplete='current-password'
+                    />
+                  </Field>
+
+                  <Field>
+                    <Button type='submit' disabled={isLoading}>
+                      {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                      {isLoading ? '登录中...' : '登录'}
+                    </Button>
+                  </Field>
+
+                  <FieldDescription className='text-center'>
+                    没有账户？{' '}
+                    <Link to='/auth/sign-up' className='underline underline-offset-4'>
+                      立即注册
+                    </Link>
+                  </FieldDescription>
+                </FieldGroup>
+              </form>
+
+              <div className='bg-muted relative hidden md:block'>
+                <img
+                  src='/login-bg.avif'
+                  alt='登录背景图'
+                  className='absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale'
+                />
               </div>
-            )}
+            </CardContent>
+          </Card>
 
-            <div className='space-y-2'>
-              <Label htmlFor='email'>邮箱</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='your@email.com'
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
-                autoComplete='email'
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='password'>密码</Label>
-              <Input
-                id='password'
-                type='password'
-                placeholder='••••••••'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                autoComplete='current-password'
-              />
-            </div>
-          </CardContent>
-
-          <CardFooter className='flex flex-col gap-4'>
-            <Button type='submit' className='w-full' disabled={isLoading}>
-              {isLoading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-              登录
-            </Button>
-
-            <div className='text-center text-sm text-muted-foreground'>
-              还没有账户？
-              <Link to='/auth/sign-up' className='ml-1 text-primary hover:underline font-medium'>
-                立即注册
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+          <FieldDescription className='px-6 text-center'>
+            继续登录即表示您已阅读并同意我们的{' '}
+            <a href='#' className='underline underline-offset-4'>
+              服务条款
+            </a>{' '}
+            和{' '}
+            <a href='#' className='underline underline-offset-4'>
+              隐私政策
+            </a>
+            。
+          </FieldDescription>
+        </div>
+      </div>
     </div>
   )
 }

@@ -256,7 +256,7 @@ function TodosPage() {
       case 'planned':
         return 'from-blue-500 to-indigo-500'
       case 'tasks':
-        return 'from-teal-500 to-emerald-500'
+        return 'from-violet-500 to-fuchsia-500'
       default:
         return 'from-orange-400 to-amber-400'
     }
@@ -365,7 +365,7 @@ function TodosPage() {
               setSelectedList('tasks')
               setSelectedTagId(null)
             }}
-            gradient='from-teal-500 to-emerald-500'
+            gradient='from-violet-500 to-fuchsia-500'
           />
 
           {tags.length > 0 && (
@@ -452,7 +452,7 @@ function TodosPage() {
         <header className='sticky top-0 z-10 flex h-20 items-center justify-between border-b border-border/70 bg-background/70 px-4 backdrop-blur-xl sm:px-6 md:px-8'>
           <div className='flex items-center gap-4'>
             <div
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${getListGradientClass()} shadow-elevation-2 ring-1 ring-white/25`}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white ${getListGradientClass()} shadow-elevation-2 ring-1 ring-white/25`}
               style={getListGradientStyle()}
             >
               {getListIcon()}
@@ -609,10 +609,10 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
     <button
       type='button'
       onClick={onClick}
-      className={`flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+      className={`group flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
         active
-          ? 'bg-primary/15 text-primary shadow-elevation-1'
-          : 'text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground'
+          ? 'bg-linear-to-r from-primary/16 via-primary/12 to-secondary/12 text-sidebar-foreground shadow-elevation-1 ring-1 ring-primary/20'
+          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground'
       }`}
     >
       <div className='flex items-center gap-3'>
@@ -620,7 +620,7 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
           className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
             active
               ? `bg-gradient-to-br ${gradient} text-white shadow-elevation-1 ring-1 ring-white/20`
-              : 'bg-muted/55 text-muted-foreground'
+              : 'bg-sidebar-accent/80 text-sidebar-foreground/70 ring-1 ring-sidebar-border/70 group-hover:bg-primary/12 group-hover:text-primary/85'
           }`}
         >
           {icon}
@@ -630,7 +630,9 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
       {count > 0 && (
         <span
           className={`text-xs font-bold px-2.5 py-1 rounded-full transition-all ${
-            active ? 'bg-primary/20 text-primary' : 'bg-muted/60 text-muted-foreground'
+            active
+              ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
+              : 'bg-sidebar-accent/70 text-sidebar-foreground/65 ring-1 ring-sidebar-border/70'
           }`}
         >
           {count}
