@@ -1,13 +1,14 @@
-import { useState } from 'react'
-import { Link, createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
-import { cn } from '@/lib/utils'
+import { Link, createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { CheckCircle2, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { signIn, getCurrentUser } from '@/data/auth.server'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/auth/login')({
   component: AuthPage,
@@ -65,7 +66,7 @@ function AuthPage() {
                 <FieldGroup>
                   <div className='flex flex-col items-center gap-2 text-center'>
                     <div className='flex items-center gap-2 text-2xl font-bold'>
-                      <CheckCircle2 className='h-7 w-7 text-primary' />
+                      <CheckCircle2 className='text-primary h-7 w-7' />
                       <span>To Do</span>
                     </div>
                     <h1 className='text-2xl font-bold'>欢迎回来</h1>
@@ -75,7 +76,7 @@ function AuthPage() {
                   </div>
 
                   {error && (
-                    <FieldDescription className='rounded-md bg-destructive/10 p-3 text-center text-destructive'>
+                    <FieldDescription className='bg-destructive/10 text-destructive rounded-md p-3 text-center'>
                       {error}
                     </FieldDescription>
                   )}

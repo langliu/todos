@@ -1,5 +1,6 @@
-import { createMiddleware } from '@tanstack/react-start'
 import { redirect } from '@tanstack/react-router'
+import { createMiddleware } from '@tanstack/react-start'
+
 import { createServerSupabaseClient, getServerUser } from './supabase.server'
 
 export const authMiddleware = createMiddleware({ type: 'function' }).server(async ({ next }) => {

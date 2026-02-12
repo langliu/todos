@@ -1,9 +1,11 @@
+import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
+
+import type { Tag } from '@/lib/supabase'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, X } from 'lucide-react'
-import type { Tag } from '@/lib/supabase'
 
 interface TagSelectorProps {
   tags: Tag[]
@@ -47,7 +49,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
       <Label className='text-sm font-medium'>标签</Label>
 
       {isCreating && (
-        <div className='p-4 rounded-2xl bg-muted/50 border border-border/60 space-y-3'>
+        <div className='bg-muted/50 border-border/60 space-y-3 rounded-2xl border p-4'>
           <div className='flex items-center gap-2'>
             <Input
               placeholder='标签名称'
@@ -60,7 +62,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
                   handleCancelCreate()
                 }
               }}
-              className='flex-1 h-10 rounded-xl text-sm'
+              className='h-10 flex-1 rounded-xl text-sm'
               autoFocus
             />
             <Button
@@ -75,16 +77,16 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-xs text-muted-foreground'>选择颜色</Label>
-            <div className='flex gap-2 flex-wrap'>
+            <Label className='text-muted-foreground text-xs'>选择颜色</Label>
+            <div className='flex flex-wrap gap-2'>
               {PRESET_COLORS.map((color) => (
                 <button
                   key={color}
                   type='button'
                   onClick={() => setSelectedColor(color)}
-                  className={`w-6 h-6 rounded-full transition-all ${
+                  className={`h-6 w-6 rounded-full transition-all ${
                     selectedColor === color
-                      ? 'ring-2 ring-offset-2 ring-ring scale-110'
+                      ? 'ring-ring scale-110 ring-2 ring-offset-2'
                       : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: color }}
@@ -97,7 +99,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
             type='button'
             onClick={handleCreateTag}
             disabled={!newTagName.trim()}
-            className='w-full h-10 rounded-xl'
+            className='h-10 w-full rounded-xl'
           >
             创建标签
           </Button>
@@ -112,8 +114,8 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
               key={tag.id}
               type='button'
               onClick={() => onToggleTag(tag.id)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
-                isSelected ? 'ring-2 ring-offset-1 ring-ring' : 'opacity-70 hover:opacity-100'
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all hover:scale-105 ${
+                isSelected ? 'ring-ring ring-2 ring-offset-1' : 'opacity-70 hover:opacity-100'
               }`}
               style={{
                 backgroundColor: `${tag.color}20`,
@@ -123,7 +125,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
             >
               <span className='max-w-[120px] truncate'>{tag.name}</span>
               {isSelected && (
-                <svg className='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 20 20'>
+                <svg className='h-3.5 w-3.5' fill='currentColor' viewBox='0 0 20 20'>
                   <path
                     fillRule='evenodd'
                     d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
@@ -142,9 +144,9 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
           variant='outline'
           size='sm'
           onClick={() => setIsCreating(true)}
-          className='w-full h-10 rounded-xl border-dashed'
+          className='h-10 w-full rounded-xl border-dashed'
         >
-          <Plus className='h-4 w-4 mr-2' />
+          <Plus className='mr-2 h-4 w-4' />
           创建新标签
         </Button>
       )}

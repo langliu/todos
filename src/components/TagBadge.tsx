@@ -23,7 +23,7 @@ export function TagBadge({ tag, onRemove }: TagBadgeProps) {
           className='rounded p-0.5 transition-colors hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none'
         >
           <svg
-            className='w-3 h-3'
+            className='h-3 w-3'
             fill='none'
             strokeLinecap='round'
             strokeLinejoin='round'

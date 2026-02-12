@@ -3,5 +3,29 @@
   "singleQuote": true,
   "semi": false,
   "jsxSingleQuote": true,
-  "endOfLine": "lf"
+  "endOfLine": "lf",
+  "experimentalTailwindcss": {
+    "preserveWhitespace": true,
+    "functions": ["clsx", "cn"],
+    "attributes": ["class", "className"]
+  },
+  "experimentalSortPackageJson": true,
+  "experimentalSortImports": {
+    "newlinesBetween": true
+  },
+  "arrowParens": "always",
+  "bracketSameLine": false,
+  "bracketSpacing": true,
+  "embeddedLanguageFormatting": "auto",
+  "htmlWhitespaceSensitivity": "css",
+  "insertFinalNewline": true,
+  "objectWrap": "preserve",
+  "printWidth": 100,
+  "proseWrap": "preserve",
+  "quoteProps": "as-needed",
+  "singleAttributePerLine": false,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false,
+  "vueIndentScriptAndStyle": false
 }

@@ -1,16 +1,10 @@
-import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ArrowLeft, Plus, Edit, Trash2, Tag as TagIcon } from 'lucide-react'
+import { useState } from 'react'
+
+import type { Tag } from '@/lib/supabase'
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,10 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { getTagsWithCounts, createTag, updateTag, deleteTag } from '@/data/tags.server'
-import type { Tag } from '@/lib/supabase'
-import { ArrowLeft, Plus, Edit, Trash2, Tag as TagIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/tags')({
@@ -140,24 +142,24 @@ function TagsPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-background to-muted/30 p-4 md:p-8'>
-      <div className='max-w-4xl mx-auto pt-4 md:pt-8'>
-        <div className='flex items-center justify-between mb-8'>
+    <div className='from-background to-muted/30 min-h-screen bg-gradient-to-br p-4 md:p-8'>
+      <div className='mx-auto max-w-4xl pt-4 md:pt-8'>
+        <div className='mb-8 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <Link
               to='/'
               aria-label='返回首页'
-              className='h-10 w-10 rounded-xl hover:bg-accent/50 transition-colors inline-flex items-center justify-center'
+              className='hover:bg-accent/50 inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors'
             >
               <ArrowLeft className='h-5 w-5' />
             </Link>
             <div className='flex items-center gap-3'>
-              <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
+              <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br'>
                 <TagIcon className='h-6 w-6 text-white' />
               </div>
               <div>
-                <h1 className='text-2xl font-bold text-foreground tracking-tight'>标签管理</h1>
-                <p className='text-sm text-muted-foreground'>管理您的任务标签</p>
+                <h1 className='text-foreground text-2xl font-bold tracking-tight'>标签管理</h1>
+                <p className='text-muted-foreground text-sm'>管理您的任务标签</p>
               </div>
             </div>
           </div>
@@ -165,18 +167,18 @@ function TagsPage() {
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger
               render={
-                <Button className='gap-2 h-11 px-6 rounded-2xl'>
+                <Button className='h-11 gap-2 rounded-2xl px-6'>
                   <Plus className='h-4 w-4' />
                   <span className='font-semibold'>创建标签</span>
                 </Button>
               }
             />
-            <DialogContent className='sm:max-w-md rounded-3xl p-0 overflow-hidden'>
-              <DialogHeader className='p-6 pb-4 border-b'>
+            <DialogContent className='overflow-hidden rounded-3xl p-0 sm:max-w-md'>
+              <DialogHeader className='border-b p-6 pb-4'>
                 <DialogTitle className='text-xl font-bold'>创建新标签</DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleCreateTag} className='p-6 space-y-5'>
+              <form onSubmit={handleCreateTag} className='space-y-5 p-6'>
                 <div className='space-y-2'>
                   <Label htmlFor='tagName' className='text-sm font-medium'>
                     标签名称 <span className='text-destructive'>*</span>
@@ -186,23 +188,23 @@ function TagsPage() {
                     placeholder='输入标签名称...'
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
-                    className='h-11 px-4 text-base rounded-2xl'
+                    className='h-11 rounded-2xl px-4 text-base'
                     autoFocus
                   />
                 </div>
 
                 <div className='space-y-2'>
                   <Label className='text-sm font-medium'>选择颜色</Label>
-                  <div className='flex gap-2 flex-wrap'>
+                  <div className='flex flex-wrap gap-2'>
                     {PRESET_COLORS.map((color) => (
                       <button
                         key={color}
                         type='button'
                         onClick={() => setNewTagColor(color)}
                         className={cn(
-                          'w-8 h-8 rounded-full transition-all',
+                          'h-8 w-8 rounded-full transition-all',
                           newTagColor === color
-                            ? 'ring-2 ring-offset-2 ring-ring scale-110'
+                            ? 'ring-ring scale-110 ring-2 ring-offset-2'
                             : 'hover:scale-110',
                         )}
                         style={{ backgroundColor: color }}
@@ -215,7 +217,7 @@ function TagsPage() {
                   <Button
                     type='submit'
                     disabled={!newTagName.trim() || isCreating}
-                    className='w-full h-11 rounded-2xl font-semibold'
+                    className='h-11 w-full rounded-2xl font-semibold'
                   >
                     {isCreating ? '创建中...' : '创建标签'}
                   </Button>
@@ -226,16 +228,16 @@ function TagsPage() {
         </div>
 
         {tags.length === 0 ? (
-          <Card className='border-2 border-border/60 shadow-elevation-2 overflow-hidden'>
+          <Card className='border-border/60 shadow-elevation-2 overflow-hidden border-2'>
             <CardContent className='p-12 text-center'>
-              <div className='inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-muted to-muted/60 mb-6 shadow-elevation-1'>
-                <TagIcon className='h-10 w-10 text-muted-foreground' />
+              <div className='from-muted to-muted/60 shadow-elevation-1 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br'>
+                <TagIcon className='text-muted-foreground h-10 w-10' />
               </div>
-              <h3 className='text-xl font-semibold text-foreground mb-2'>还没有标签</h3>
+              <h3 className='text-foreground mb-2 text-xl font-semibold'>还没有标签</h3>
               <p className='text-muted-foreground mb-8'>创建第一个标签来开始组织您的任务</p>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
-                className='gap-2 h-11 px-6 rounded-2xl'
+                className='h-11 gap-2 rounded-2xl px-6'
               >
                 <Plus className='h-4 w-4' />
                 创建第一个标签
@@ -247,24 +249,24 @@ function TagsPage() {
             {tags.map((tag: Tag & { todo_count: number }) => (
               <Card
                 key={tag.id}
-                className='border-2 border-border/60 shadow-elevation-2 overflow-hidden hover:border-border transition-all'
+                className='border-border/60 shadow-elevation-2 hover:border-border overflow-hidden border-2 transition-all'
               >
                 <CardContent className='p-5'>
                   <div className='flex items-center gap-4'>
                     <div
-                      className='w-12 h-12 rounded-xl flex items-center justify-center shadow-elevation-1'
+                      className='shadow-elevation-1 flex h-12 w-12 items-center justify-center rounded-xl'
                       style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                     >
                       <TagIcon className='h-6 w-6' />
                     </div>
-                    <div className='flex-1 min-w-0'>
+                    <div className='min-w-0 flex-1'>
                       <h3
-                        className='font-semibold text-foreground truncate'
+                        className='text-foreground truncate font-semibold'
                         style={{ color: tag.color }}
                       >
                         {tag.name}
                       </h3>
-                      <p className='text-sm text-muted-foreground mt-0.5'>
+                      <p className='text-muted-foreground mt-0.5 text-sm'>
                         {tag.todo_count} 个任务
                       </p>
                     </div>
@@ -273,7 +275,7 @@ function TagsPage() {
                         variant='ghost'
                         size='icon'
                         onClick={() => openEditDialog(tag)}
-                        className='h-9 w-9 rounded-xl hover:bg-primary/10'
+                        className='hover:bg-primary/10 h-9 w-9 rounded-xl'
                       >
                         <Edit className='h-4 w-4' />
                       </Button>
@@ -281,7 +283,7 @@ function TagsPage() {
                         variant='ghost'
                         size='icon'
                         onClick={() => handleDeleteTag(tag.id)}
-                        className='h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive'
+                        className='hover:bg-destructive/10 hover:text-destructive h-9 w-9 rounded-xl'
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>
@@ -294,12 +296,12 @@ function TagsPage() {
         )}
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className='sm:max-w-md rounded-3xl p-0 overflow-hidden'>
-            <DialogHeader className='p-6 pb-4 border-b'>
+          <DialogContent className='overflow-hidden rounded-3xl p-0 sm:max-w-md'>
+            <DialogHeader className='border-b p-6 pb-4'>
               <DialogTitle className='text-xl font-bold'>编辑标签</DialogTitle>
             </DialogHeader>
 
-            <form onSubmit={handleEditTag} className='p-6 space-y-5'>
+            <form onSubmit={handleEditTag} className='space-y-5 p-6'>
               <div className='space-y-2'>
                 <Label htmlFor='editTagName' className='text-sm font-medium'>
                   标签名称 <span className='text-destructive'>*</span>
@@ -309,23 +311,23 @@ function TagsPage() {
                   placeholder='输入标签名称...'
                   value={editTagName}
                   onChange={(e) => setEditTagName(e.target.value)}
-                  className='h-11 px-4 text-base rounded-2xl'
+                  className='h-11 rounded-2xl px-4 text-base'
                   autoFocus
                 />
               </div>
 
               <div className='space-y-2'>
                 <Label className='text-sm font-medium'>选择颜色</Label>
-                <div className='flex gap-2 flex-wrap'>
+                <div className='flex flex-wrap gap-2'>
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
                       type='button'
                       onClick={() => setEditTagColor(color)}
                       className={cn(
-                        'w-8 h-8 rounded-full transition-all',
+                        'h-8 w-8 rounded-full transition-all',
                         editTagColor === color
-                          ? 'ring-2 ring-offset-2 ring-ring scale-110'
+                          ? 'ring-ring scale-110 ring-2 ring-offset-2'
                           : 'hover:scale-110',
                       )}
                       style={{ backgroundColor: color }}
@@ -334,19 +336,19 @@ function TagsPage() {
                 </div>
               </div>
 
-              <div className='pt-2 flex gap-3'>
+              <div className='flex gap-3 pt-2'>
                 <Button
                   type='button'
                   variant='outline'
                   onClick={() => setIsEditDialogOpen(false)}
-                  className='flex-1 h-11 rounded-2xl font-medium'
+                  className='h-11 flex-1 rounded-2xl font-medium'
                 >
                   取消
                 </Button>
                 <Button
                   type='submit'
                   disabled={!editTagName.trim() || isEditing}
-                  className='flex-1 h-11 rounded-2xl font-semibold'
+                  className='h-11 flex-1 rounded-2xl font-semibold'
                 >
                   {isEditing ? '保存中...' : '保存'}
                 </Button>
@@ -364,12 +366,12 @@ function TagsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className='gap-3 pt-2'>
-              <AlertDialogCancel className='h-11 px-6 rounded-2xl font-medium'>
+              <AlertDialogCancel className='h-11 rounded-2xl px-6 font-medium'>
                 取消
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmDeleteTag}
-                className='h-11 px-6 rounded-2xl font-semibold bg-destructive hover:bg-destructive/90'
+                className='bg-destructive hover:bg-destructive/90 h-11 rounded-2xl px-6 font-semibold'
               >
                 删除
               </AlertDialogAction>

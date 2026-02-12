@@ -1,8 +1,12 @@
-import { createServerFn } from '@tanstack/react-start'
-import type { Tag, Todo } from '@/lib/supabase'
-import { authMiddleware } from '@/lib/auth'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
+
+import { createServerFn } from '@tanstack/react-start'
+
+import type { Tag, Todo } from '@/lib/supabase'
+
+import { authMiddleware } from '@/lib/auth'
+
 import { updateTodoTags } from './tags.server'
 
 export type CreateTodoInput = {

@@ -1,6 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
+import { useQuery } from '@tanstack/react-query'
 import {
   Star,
   Trash2,
@@ -10,9 +8,14 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react'
+import { lazy, Suspense, useState } from 'react'
+
 import type { Tag, Todo } from '@/lib/supabase'
-import { useQuery } from '@tanstack/react-query'
+
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { getSubtasks } from '@/data/subtasks.server'
+
 import { TagBadge } from './TagBadge'
 
 const LazySubtaskList = lazy(async () => {
@@ -66,9 +69,9 @@ export function TodoItem({
   const hasSubtasks = totalSubtasks > 0
 
   return (
-    <article className='group rounded-2xl border border-border/75 bg-card/65 shadow-elevation-1 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-elevation-2'>
+    <article className='group border-border/75 bg-card/65 shadow-elevation-1 hover:border-primary/20 hover:shadow-elevation-2 rounded-2xl border transition-all duration-200 hover:-translate-y-0.5'>
       <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5'>
-        <div className='hidden shrink-0 text-muted-foreground/60 transition-opacity sm:block sm:opacity-0 sm:group-hover:opacity-100'>
+        <div className='text-muted-foreground/60 hidden shrink-0 transition-opacity sm:block sm:opacity-0 sm:group-hover:opacity-100'>
           <GripVertical className='h-4 w-4' />
         </div>
 
@@ -77,13 +80,13 @@ export function TodoItem({
             <Checkbox
               checked={todo.completed}
               onCheckedChange={(checked) => onToggle(todo.id, checked as boolean)}
-              className='h-5.5 w-5.5 rounded-full border-2 border-muted-foreground/45 shadow-sm transition-all data-[state=checked]:border-primary data-[state=checked]:bg-primary'
+              className='border-muted-foreground/45 data-[state=checked]:border-primary data-[state=checked]:bg-primary h-5.5 w-5.5 rounded-full border-2 shadow-sm transition-all'
             />
           </div>
 
           <div className='min-w-0 flex-1 py-0.5 sm:py-1'>
             <p
-              className={`truncate text-[0.97rem] font-medium leading-6 transition-all duration-200 ${
+              className={`truncate text-[0.97rem] leading-6 font-medium transition-all duration-200 ${
                 todo.completed ? 'text-muted-foreground line-through' : 'text-foreground'
               }`}
             >
@@ -133,7 +136,7 @@ export function TodoItem({
             <button
               type='button'
               onClick={() => setIsExpanded(!isExpanded)}
-              className='inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/35 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/35 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+              className='border-border/80 bg-muted/35 text-muted-foreground hover:border-primary/35 hover:text-primary focus-visible:ring-primary/60 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none'
             >
               {isExpanded ? (
                 <ChevronDown className='h-3.5 w-3.5' />
@@ -148,7 +151,7 @@ export function TodoItem({
             <button
               type='button'
               onClick={() => setIsExpanded(true)}
-              className='rounded-full border border-dashed border-border/80 px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/35 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+              className='border-border/80 text-muted-foreground hover:border-primary/35 hover:text-primary focus-visible:ring-primary/60 rounded-full border border-dashed px-2.5 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none'
             >
               + 添加子任务
             </button>
@@ -160,7 +163,7 @@ export function TodoItem({
             <Button
               variant='ghost'
               size='icon'
-              className={`h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+              className={`focus-visible:ring-primary/60 h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none ${
                 todo.important
                   ? 'bg-yellow-500/15 text-yellow-500 hover:bg-yellow-500/25'
                   : 'text-muted-foreground hover:bg-yellow-500/15 hover:text-yellow-500'
@@ -172,7 +175,7 @@ export function TodoItem({
             >
               <Star
                 className={`h-4 w-4 transition-transform duration-200 ${
-                  todo.important ? 'fill-current scale-110' : ''
+                  todo.important ? 'scale-110 fill-current' : ''
                 }`}
               />
             </Button>
@@ -180,7 +183,7 @@ export function TodoItem({
             <Button
               variant='ghost'
               size='icon'
-              className='h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-primary/15 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+              className='text-muted-foreground hover:bg-primary/15 hover:text-primary focus-visible:ring-primary/60 h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none'
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit(todo)
@@ -192,7 +195,7 @@ export function TodoItem({
             <Button
               variant='ghost'
               size='icon'
-              className='h-9 w-9 rounded-xl text-muted-foreground transition-all duration-200 hover:bg-destructive/15 hover:text-destructive focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none'
+              className='text-muted-foreground hover:bg-destructive/15 hover:text-destructive focus-visible:ring-destructive/70 h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none'
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(todo.id)
@@ -205,9 +208,9 @@ export function TodoItem({
       </div>
 
       {isExpanded && (
-        <div className='border-t border-border/65 px-4 pb-3 pt-2 sm:px-5'>
+        <div className='border-border/65 border-t px-4 pt-2 pb-3 sm:px-5'>
           <Suspense
-            fallback={<div className='py-2 text-xs text-muted-foreground'>加载子任务中...</div>}
+            fallback={<div className='text-muted-foreground py-2 text-xs'>加载子任务中...</div>}
           >
             <LazySubtaskList todoId={todo.id} subtasks={subtasks} />
           </Suspense>

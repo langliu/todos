@@ -1,9 +1,11 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
 import { GripVertical, Trash2, X } from 'lucide-react'
+
 import type { Subtask } from '@/lib/supabase'
+
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface SubtaskItemProps {
   subtask: Subtask
@@ -41,12 +43,12 @@ export function SubtaskItem({
     <div
       ref={setNodeRef}
       style={style}
-      className='flex items-center gap-3 p-3 bg-muted/30 rounded-xl group hover:bg-muted/50 transition-all'
+      className='bg-muted/30 group hover:bg-muted/50 flex items-center gap-3 rounded-xl p-3 transition-all'
     >
       <button
         {...attributes}
         {...listeners}
-        className='shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground'
+        className='text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100'
       >
         <GripVertical className='h-4 w-4 cursor-grab' />
       </button>
@@ -54,11 +56,11 @@ export function SubtaskItem({
       <Checkbox
         checked={subtask.completed}
         onCheckedChange={(checked) => onToggle(subtask.id, checked as boolean)}
-        className='shrink-0 h-4.5 w-4.5 rounded-full border-2 border-muted-foreground/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all'
+        className='border-muted-foreground/40 data-[state=checked]:bg-primary data-[state=checked]:border-primary h-4.5 w-4.5 shrink-0 rounded-full border-2 transition-all'
       />
 
       {isEditing ? (
-        <div className='flex-1 flex items-center gap-2'>
+        <div className='flex flex-1 items-center gap-2'>
           <input
             type='text'
             value={editValue}
@@ -70,26 +72,26 @@ export function SubtaskItem({
                 onEditCancel()
               }
             }}
-            className='flex-1 bg-background border-2 border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary/50'
+            className='bg-background border-border focus:border-primary/50 flex-1 rounded-lg border-2 px-3 py-1.5 text-sm focus:outline-none'
             autoFocus
           />
           <Button
             size='icon'
             variant='ghost'
             onClick={onEditSave}
-            className='h-8 w-8 rounded-lg hover:bg-primary/10'
+            className='hover:bg-primary/10 h-8 w-8 rounded-lg'
           >
             <X className='h-4 w-4' />
           </Button>
         </div>
       ) : (
         <div
-          className='flex-1 min-w-0 text-sm cursor-pointer'
+          className='min-w-0 flex-1 cursor-pointer text-sm'
           onClick={() => onEditStart(subtask.id, subtask.title)}
         >
           <p
             className={`truncate transition-all duration-200 ${
-              subtask.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+              subtask.completed ? 'text-muted-foreground line-through' : 'text-foreground'
             }`}
           >
             {subtask.title}
@@ -101,7 +103,7 @@ export function SubtaskItem({
         variant='ghost'
         size='icon'
         onClick={() => onDelete(subtask.id)}
-        className='shrink-0 h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive'
+        className='hover:bg-destructive/10 hover:text-destructive h-8 w-8 shrink-0 rounded-lg opacity-0 transition-opacity group-hover:opacity-100'
       >
         <Trash2 className='h-4 w-4' />
       </Button>

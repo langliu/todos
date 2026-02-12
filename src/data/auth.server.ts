@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
+
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabase.server'
 
 export const signUp = createServerFn({ method: 'POST' })

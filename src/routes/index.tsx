@@ -1,14 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { TodoItem } from '@/components/TodoItem'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { getTodos, createTodo, updateTodo, deleteTodo } from '@/data/todos.server'
-import { getCurrentUser, signOut } from '@/data/auth.server'
-import { getTags } from '@/data/tags.server'
-import type { Todo } from '@/lib/supabase'
-import type { TodoListItem, UpdateTodoInput } from '@/data/todos.server'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   Sun,
   Star,
@@ -22,6 +13,17 @@ import {
   Settings,
   Tag as TagIcon,
 } from 'lucide-react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+
+import type { TodoListItem, UpdateTodoInput } from '@/data/todos.server'
+import type { Todo } from '@/lib/supabase'
+
+import { TodoItem } from '@/components/TodoItem'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { getCurrentUser, signOut } from '@/data/auth.server'
+import { getTags } from '@/data/tags.server'
+import { getTodos, createTodo, updateTodo, deleteTodo } from '@/data/todos.server'
 
 const LazyAddTodoDialog = lazy(async () => {
   const module = await import('@/components/AddTodoDialog')
@@ -303,21 +305,21 @@ function TodosPage() {
   }
 
   return (
-    <div className='relative flex h-screen overflow-hidden bg-background'>
+    <div className='bg-background relative flex h-screen overflow-hidden'>
       <div aria-hidden className='pointer-events-none absolute inset-0'>
         <div className='absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.18),transparent_48%),radial-gradient(ellipse_at_bottom_right,rgba(16,185,129,0.14),transparent_56%)]' />
         <div className='absolute inset-0 bg-[linear-gradient(165deg,rgba(15,23,42,0.2)_0%,rgba(2,6,23,0)_44%)]' />
       </div>
 
-      <aside className='z-10 hidden w-72 shrink-0 border-r border-sidebar-border/80 bg-sidebar/85 backdrop-blur-xl md:flex md:flex-col'>
-        <div className='flex h-20 items-center border-b border-sidebar-border/80 px-6'>
+      <aside className='border-sidebar-border/80 bg-sidebar/85 z-10 hidden w-72 shrink-0 border-r backdrop-blur-xl md:flex md:flex-col'>
+        <div className='border-sidebar-border/80 flex h-20 items-center border-b px-6'>
           <div className='flex items-center gap-3'>
-            <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-elevation-2 ring-1 ring-white/15'>
+            <div className='from-primary to-secondary shadow-elevation-2 flex h-11 w-11 items-center justify-center  rounded-2xl bg-linear-to-br ring-1 ring-white/15'>
               <CheckCircle2 className='h-5 w-5 text-white' />
             </div>
             <div>
-              <h1 className='text-xl font-bold text-sidebar-foreground tracking-tight'>To Do</h1>
-              <p className='text-xs text-muted-foreground/90'>高效任务管理</p>
+              <h1 className='text-sidebar-foreground text-xl font-bold tracking-tight'>To Do</h1>
+              <p className='text-muted-foreground/90 text-xs'>高效任务管理</p>
             </div>
           </div>
         </div>
@@ -369,8 +371,8 @@ function TodosPage() {
           />
 
           {tags.length > 0 && (
-            <div className='border-t border-border/60 pt-4'>
-              <p className='px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider'>
+            <div className='border-border/60 border-t pt-4'>
+              <p className='text-muted-foreground px-4 py-2 text-xs font-semibold tracking-wider uppercase'>
                 标签
               </p>
               <div className='space-y-1'>
@@ -382,7 +384,7 @@ function TodosPage() {
                       setSelectedTagId(tag.id)
                       setSelectedList('tasks')
                     }}
-                    className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+                    className={`focus-visible:ring-primary/60 flex w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none ${
                       selectedTagId === tag.id
                         ? 'bg-primary/15 text-primary shadow-elevation-1'
                         : 'text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground'
@@ -391,7 +393,7 @@ function TodosPage() {
                     <div
                       className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
                         selectedTagId === tag.id
-                          ? 'bg-gradient-to-br shadow-elevation-1 ring-1 ring-white/20'
+                          ? 'shadow-elevation-1 bg-linear-to-br ring-1 ring-white/20'
                           : 'bg-muted/55 text-muted-foreground'
                       }`}
                       style={{
@@ -401,14 +403,14 @@ function TodosPage() {
                     >
                       <TagIcon className='h-4 w-4' />
                     </div>
-                    <span className='flex-1 text-left truncate'>{tag.name}</span>
+                    <span className='flex-1 truncate text-left'>{tag.name}</span>
                   </button>
                 ))}
                 <Link
                   to='/tags'
-                  className='flex w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-sidebar-accent/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+                  className='text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground focus-visible:ring-primary/60 flex w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none'
                 >
-                  <div className='flex h-9 w-9 items-center justify-center rounded-xl bg-muted/55 text-muted-foreground'>
+                  <div className='bg-muted/55 text-muted-foreground flex h-9 w-9 items-center justify-center rounded-xl'>
                     <Settings className='h-4 w-4' />
                   </div>
                   <span className='flex-1 text-left'>管理标签</span>
@@ -419,25 +421,25 @@ function TodosPage() {
         </nav>
 
         {user && (
-          <div className='border-t border-sidebar-border/80 bg-muted/35 p-4'>
-            <div className='flex items-center gap-3 rounded-2xl border border-border/70 bg-sidebar/60 px-3 py-3'>
-              <div className='flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white shadow-elevation-1 ring-1 ring-white/20'>
+          <div className='border-sidebar-border/80 bg-muted/35 border-t p-4'>
+            <div className='border-border/70 bg-sidebar/60 flex items-center gap-3 rounded-2xl border px-3 py-3'>
+              <div className='from-primary to-secondary shadow-elevation-1 flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold text-white ring-1 ring-white/20'>
                 {user.email?.charAt(0).toUpperCase() || <User className='h-4 w-4' />}
               </div>
-              <div className='flex-1 min-w-0'>
-                <p className='text-sm font-medium text-sidebar-foreground truncate'>{user.email}</p>
+              <div className='min-w-0 flex-1'>
+                <p className='text-sidebar-foreground truncate text-sm font-medium'>{user.email}</p>
               </div>
               <Link
                 to='/settings'
                 aria-label='打开设置'
-                className='inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-primary/15 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none'
+                className='hover:bg-primary/15 hover:text-primary focus-visible:ring-primary/60 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:ring-2 focus-visible:outline-none'
               >
                 <Settings className='h-4 w-4' />
               </Link>
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-9 w-9 flex-shrink-0 rounded-xl transition-colors hover:bg-destructive/15 hover:text-destructive focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none'
+                className='hover:bg-destructive/15 hover:text-destructive focus-visible:ring-destructive/70 h-9 w-9 shrink-0 rounded-xl transition-colors focus-visible:ring-2 focus-visible:outline-none'
                 onClick={() => signOutMutation.mutate({ data: undefined })}
                 disabled={signOutMutation.isPending}
               >
@@ -449,16 +451,16 @@ function TodosPage() {
       </aside>
 
       <main className='z-10 flex min-w-0 flex-1 flex-col bg-transparent'>
-        <header className='sticky top-0 z-10 flex h-20 items-center justify-between border-b border-border/70 bg-background/70 px-4 backdrop-blur-xl sm:px-6 md:px-8'>
+        <header className='border-border/70 bg-background/70 sticky top-0 z-10 flex h-20 items-center justify-between border-b px-4 backdrop-blur-xl sm:px-6 md:px-8'>
           <div className='flex items-center gap-4'>
             <div
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white ${getListGradientClass()} shadow-elevation-2 ring-1 ring-white/25`}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br text-white ${getListGradientClass()} shadow-elevation-2 ring-1 ring-white/25`}
               style={getListGradientStyle()}
             >
               {getListIcon()}
             </div>
             <div>
-              <h1 className='text-2xl font-bold text-foreground tracking-tight'>
+              <h1 className='text-foreground text-2xl font-bold tracking-tight'>
                 {getListTitle()}
               </h1>
               <ClientDate />
@@ -468,7 +470,7 @@ function TodosPage() {
             <Suspense
               fallback={
                 <Button
-                  className='h-11 rounded-2xl bg-linear-to-r from-primary to-secondary px-6 font-semibold shadow-elevation-2 transition-all'
+                  className='from-primary to-secondary shadow-elevation-2 h-11 rounded-2xl bg-linear-to-r px-6 font-semibold transition-all'
                   disabled
                 >
                   添加任务
@@ -536,16 +538,16 @@ function TodosPage() {
             </div>
 
             <div className='relative'>
-              <Search className='absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground' />
+              <Search className='text-muted-foreground absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2' />
               <Input
                 placeholder='搜索任务...'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className='h-12 rounded-2xl border border-border/75 bg-card/70 pl-12 pr-4 text-base shadow-elevation-1 backdrop-blur-sm transition-all focus:border-primary/40 focus:bg-background/85 focus-visible:ring-2 focus-visible:ring-primary/40'
+                className='border-border/75 bg-card/70 shadow-elevation-1 focus:border-primary/40 focus:bg-background/85 focus-visible:ring-primary/40 h-12 rounded-2xl border pr-4 pl-12 text-base backdrop-blur-sm transition-all focus-visible:ring-2'
               />
             </div>
 
-            <div className='overflow-hidden rounded-3xl border border-border/75 bg-card/70 p-3 shadow-elevation-3 backdrop-blur-sm sm:p-4'>
+            <div className='border-border/75 bg-card/70 shadow-elevation-3 overflow-hidden rounded-3xl border p-3 backdrop-blur-sm sm:p-4'>
               {filteredTodos.length === 0 ? (
                 <EmptyState icon={getListIcon()} {...getEmptyStateMessage()} />
               ) : (
@@ -573,7 +575,7 @@ function TodosPage() {
             </div>
 
             {filteredTodos.length > 0 && (
-              <p className='py-2 text-center text-sm text-muted-foreground'>
+              <p className='text-muted-foreground py-2 text-center text-sm'>
                 共 {filteredTodos.length} 个任务
               </p>
             )}
@@ -609,9 +611,9 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
     <button
       type='button'
       onClick={onClick}
-      className={`group flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+      className={`group focus-visible:ring-primary/60 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none ${
         active
-          ? 'bg-linear-to-r from-primary/16 via-primary/12 to-secondary/12 text-sidebar-foreground shadow-elevation-1 ring-1 ring-primary/20'
+          ? 'from-primary/16 via-primary/12 to-secondary/12 text-sidebar-foreground shadow-elevation-1 ring-primary/20 bg-linear-to-r ring-1'
           : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground'
       }`}
     >
@@ -619,8 +621,8 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
         <div
           className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
             active
-              ? `bg-gradient-to-br ${gradient} text-white shadow-elevation-1 ring-1 ring-white/20`
-              : 'bg-sidebar-accent/80 text-sidebar-foreground/70 ring-1 ring-sidebar-border/70 group-hover:bg-primary/12 group-hover:text-primary/85'
+              ? `bg-linear-to-br ${gradient} shadow-elevation-1 text-white ring-1 ring-white/20`
+              : 'bg-sidebar-accent/80 text-sidebar-foreground/70 ring-sidebar-border/70 group-hover:bg-primary/12 group-hover:text-primary/85 ring-1'
           }`}
         >
           {icon}
@@ -629,10 +631,10 @@ function SidebarItem({ icon, label, count, active, onClick, gradient }: SidebarI
       </div>
       {count > 0 && (
         <span
-          className={`text-xs font-bold px-2.5 py-1 rounded-full transition-all ${
+          className={`rounded-full px-2.5 py-1 text-xs font-bold transition-all ${
             active
-              ? 'bg-primary/15 text-primary ring-1 ring-primary/25'
-              : 'bg-sidebar-accent/70 text-sidebar-foreground/65 ring-1 ring-sidebar-border/70'
+              ? 'bg-primary/15 text-primary ring-primary/25 ring-1'
+              : 'bg-sidebar-accent/70 text-sidebar-foreground/65 ring-sidebar-border/70 ring-1'
           }`}
         >
           {count}
@@ -651,13 +653,13 @@ interface EmptyStateProps {
 function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
     <div className='animate-fade-in px-8 py-20 text-center'>
-      <div className='mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-muted to-muted/60 shadow-elevation-1'>
+      <div className='from-muted to-muted/60 shadow-elevation-1 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-linear-to-br'>
         {icon}
       </div>
-      <h3 className='mb-2 text-xl font-semibold text-foreground'>{title}</h3>
-      <p className='mb-8 text-muted-foreground'>{subtitle}</p>
-      <div className='flex items-center justify-center gap-2 text-sm text-muted-foreground'>
-        <Sparkles className='h-4 w-4 text-primary' />
+      <h3 className='text-foreground mb-2 text-xl font-semibold'>{title}</h3>
+      <p className='text-muted-foreground mb-8'>{subtitle}</p>
+      <div className='text-muted-foreground flex items-center justify-center gap-2 text-sm'>
+        <Sparkles className='text-primary h-4 w-4' />
         <span>点击右上角按钮添加任务</span>
       </div>
     </div>
@@ -676,7 +678,7 @@ function MobileListChip({ label, active, color, onClick }: MobileListChipProps) 
     <button
       type='button'
       onClick={onClick}
-      className={`cursor-pointer rounded-2xl border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none ${
+      className={`focus-visible:ring-primary/60 cursor-pointer rounded-2xl border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none ${
         active
           ? 'border-primary/40 bg-primary/20 text-primary shadow-elevation-1'
           : 'border-border/75 bg-card/55 text-muted-foreground'
@@ -711,5 +713,5 @@ function ClientDate() {
     )
   }, [])
 
-  return <span className='text-sm text-muted-foreground font-medium'>{mounted ? date : ''}</span>
+  return <span className='text-muted-foreground text-sm font-medium'>{mounted ? date : ''}</span>
 }

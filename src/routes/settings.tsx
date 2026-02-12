@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { ArrowLeft, CheckCircle2, Loader2, Settings, Shield, User, Check, X } from 'lucide-react'
+import { useState } from 'react'
+
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
@@ -12,8 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { updatePassword, getCurrentUser } from '@/data/auth.server'
-import { ArrowLeft, CheckCircle2, Loader2, Settings, Shield, User, Check, X } from 'lucide-react'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,
@@ -103,63 +104,63 @@ function SettingsPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-background to-muted/30 p-4 md:p-8'>
-      <div className='max-w-2xl mx-auto pt-4 md:pt-8'>
-        <div className='flex items-center gap-4 mb-8'>
+    <div className='from-background to-muted/30 min-h-screen bg-gradient-to-br p-4 md:p-8'>
+      <div className='mx-auto max-w-2xl pt-4 md:pt-8'>
+        <div className='mb-8 flex items-center gap-4'>
           <Link
             to='/'
             aria-label='返回首页'
-            className='h-10 w-10 rounded-xl hover:bg-accent/50 transition-colors inline-flex items-center justify-center'
+            className='hover:bg-accent/50 inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors'
           >
             <ArrowLeft className='h-5 w-5' />
           </Link>
           <div className='flex items-center gap-3'>
-            <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
+            <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br'>
               <Settings className='h-6 w-6 text-white' />
             </div>
             <div>
-              <h1 className='text-2xl font-bold text-foreground tracking-tight'>设置</h1>
-              <p className='text-sm text-muted-foreground'>管理您的账户设置</p>
+              <h1 className='text-foreground text-2xl font-bold tracking-tight'>设置</h1>
+              <p className='text-muted-foreground text-sm'>管理您的账户设置</p>
             </div>
           </div>
         </div>
 
         {user && (
-          <Card className='mb-6 border-2 border-border/60 shadow-elevation-2'>
+          <Card className='border-border/60 shadow-elevation-2 mb-6 border-2'>
             <CardContent className='p-6'>
               <div className='flex items-center gap-4'>
-                <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-elevation-1'>
+                <div className='from-primary to-secondary shadow-elevation-1 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br text-xl font-bold text-white'>
                   {user.email?.charAt(0).toUpperCase() || <User className='h-8 w-8' />}
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm text-muted-foreground mb-1'>当前账户</p>
-                  <p className='text-lg font-semibold text-foreground truncate'>{user.email}</p>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-muted-foreground mb-1 text-sm'>当前账户</p>
+                  <p className='text-foreground truncate text-lg font-semibold'>{user.email}</p>
                 </div>
-                <div className='w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center'>
-                  <Shield className='h-6 w-6 text-primary' />
+                <div className='bg-primary/10 flex h-12 w-12 items-center justify-center rounded-xl'>
+                  <Shield className='text-primary h-6 w-6' />
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <Card className='border-2 border-border/60 shadow-elevation-2 overflow-hidden'>
-          <CardHeader className='bg-gradient-to-r from-muted/50 to-transparent border-b'>
+        <Card className='border-border/60 shadow-elevation-2 overflow-hidden border-2'>
+          <CardHeader className='from-muted/50 border-b bg-gradient-to-r to-transparent'>
             <CardTitle className='text-xl'>修改密码</CardTitle>
             <CardDescription>为了账户安全，请定期更新您的密码</CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
-            <CardContent className='p-6 space-y-6'>
+            <CardContent className='space-y-6 p-6'>
               {error && (
-                <div className='p-4 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2'>
-                  <X className='h-5 w-5 flex-shrink-0 mt-0.5' />
+                <div className='text-destructive bg-destructive/10 border-destructive/20 animate-in fade-in slide-in-from-top-2 flex items-start gap-3 rounded-xl border p-4 text-sm'>
+                  <X className='mt-0.5 h-5 w-5 flex-shrink-0' />
                   <span>{error}</span>
                 </div>
               )}
 
               {success && (
-                <div className='p-4 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900/50 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2'>
+                <div className='animate-in fade-in slide-in-from-top-2 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400'>
                   <CheckCircle2 className='h-5 w-5 flex-shrink-0' />
                   <span>密码修改成功</span>
                 </div>
@@ -177,7 +178,7 @@ function SettingsPage() {
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   disabled={isLoading}
                   autoComplete='current-password'
-                  className='h-11 rounded-xl border-2 border-border bg-background focus:border-primary/50 focus:bg-background/80 transition-all'
+                  className='border-border bg-background focus:border-primary/50 focus:bg-background/80 h-11 rounded-xl border-2 transition-all'
                 />
               </div>
 
@@ -193,12 +194,12 @@ function SettingsPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   disabled={isLoading}
                   autoComplete='new-password'
-                  className='h-11 rounded-xl border-2 border-border bg-background focus:border-primary/50 focus:bg-background/80 transition-all'
+                  className='border-border bg-background focus:border-primary/50 focus:bg-background/80 h-11 rounded-xl border-2 transition-all'
                 />
                 {newPassword && (
                   <div className='mt-3 space-y-2'>
                     <div className='flex items-center justify-between'>
-                      <span className='text-xs text-muted-foreground'>密码强度</span>
+                      <span className='text-muted-foreground text-xs'>密码强度</span>
                       <span
                         className={`text-xs font-medium ${passwordStrength >= 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
                       >
@@ -231,11 +232,11 @@ function SettingsPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
                   autoComplete='new-password'
-                  className='h-11 rounded-xl border-2 border-border bg-background focus:border-primary/50 focus:bg-background/80 transition-all'
+                  className='border-border bg-background focus:border-primary/50 focus:bg-background/80 h-11 rounded-xl border-2 transition-all'
                 />
                 {confirmPassword && (
                   <div
-                    className={`flex items-center gap-2 mt-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                    className={`mt-2 flex items-center gap-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
                   >
                     {isMatch ? <Check className='h-3.5 w-3.5' /> : <X className='h-3.5 w-3.5' />}
                     <span>{isMatch ? '密码匹配' : '密码不匹配'}</span>
@@ -243,8 +244,8 @@ function SettingsPage() {
                 )}
               </div>
 
-              <div className='bg-muted/50 rounded-xl p-4 space-y-3 border border-border/40'>
-                <p className='text-sm font-semibold text-foreground'>密码要求</p>
+              <div className='bg-muted/50 border-border/40 space-y-3 rounded-xl border p-4'>
+                <p className='text-foreground text-sm font-semibold'>密码要求</p>
                 <ul className='space-y-2'>
                   <li
                     className={`flex items-center gap-2 text-xs ${isLengthValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
@@ -283,7 +284,7 @@ function SettingsPage() {
             <CardFooter className='p-6 pt-0'>
               <Button
                 type='submit'
-                className='w-full h-12 rounded-xl text-base font-medium shadow-elevation-1 hover:shadow-elevation-2 transition-all'
+                className='shadow-elevation-1 hover:shadow-elevation-2 h-12 w-full rounded-xl text-base font-medium transition-all'
                 disabled={isLoading || !isLengthValid || !isDifferent || !isMatch}
               >
                 {isLoading && <Loader2 className='mr-2 h-5 w-5 animate-spin' />}

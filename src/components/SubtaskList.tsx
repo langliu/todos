@@ -1,11 +1,13 @@
-import { useState } from 'react'
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { SubtaskItem } from './SubtaskItem'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+
+import type { Subtask } from '@/lib/supabase'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   createSubtask,
   deleteSubtask,
@@ -13,7 +15,8 @@ import {
   toggleSubtaskCompleted,
   reorderSubtasks,
 } from '@/data/subtasks.server'
-import type { Subtask } from '@/lib/supabase'
+
+import { SubtaskItem } from './SubtaskItem'
 
 interface SubtaskListProps {
   todoId: string
@@ -262,13 +265,13 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
     <div className='space-y-3'>
       {totalCount > 0 && (
         <div className='flex items-center gap-3'>
-          <div className='flex-1 h-2 bg-muted rounded-full overflow-hidden'>
+          <div className='bg-muted h-2 flex-1 overflow-hidden rounded-full'>
             <div
-              className='h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full'
+              className='from-primary to-secondary h-full rounded-full bg-gradient-to-r transition-all duration-300'
               style={{ width: `${progress}%` }}
             />
           </div>
-          <span className='text-xs font-medium text-muted-foreground shrink-0'>
+          <span className='text-muted-foreground shrink-0 text-xs font-medium'>
             {completedCount}/{totalCount}
           </span>
         </div>
@@ -301,12 +304,12 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
             placeholder='添加子任务...'
             value={newSubtaskTitle}
             onChange={(e) => setNewSubtaskTitle(e.target.value)}
-            className='flex-1 h-10 px-4 text-sm rounded-xl border-2 border-border bg-card focus:border-primary/30'
+            className='border-border bg-card focus:border-primary/30 h-10 flex-1 rounded-xl border-2 px-4 text-sm'
           />
           <Button
             type='submit'
             disabled={!newSubtaskTitle.trim()}
-            className='h-10 px-4 rounded-xl gap-2'
+            className='h-10 gap-2 rounded-xl px-4'
           >
             <Plus className='h-4 w-4' />
           </Button>

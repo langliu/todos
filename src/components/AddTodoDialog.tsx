@@ -1,13 +1,11 @@
-import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Sparkles, Calendar as CalendarIcon } from 'lucide-react'
+import { useState } from 'react'
+
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Dialog,
   DialogContent,
@@ -16,10 +14,14 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Sparkles, Calendar as CalendarIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { TagSelector } from './TagSelector'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Textarea } from '@/components/ui/textarea'
 import { getTags, createTag } from '@/data/tags.server'
+import { cn } from '@/lib/utils'
+
+import { TagSelector } from './TagSelector'
 
 interface AddTodoDialogProps {
   onAdd: (todo: {
@@ -115,26 +117,26 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
       ) : (
         <DialogTrigger
           render={
-            <Button className='gap-2 h-11 px-6 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 hover:shadow-elevation-3'>
+            <Button className='from-primary to-secondary shadow-elevation-2 hover:shadow-elevation-3 h-11 gap-2 rounded-2xl bg-linear-to-r px-6 transition-all hover:opacity-90'>
               <Plus className='h-4 w-4' />
               <span className='font-semibold'>添加任务</span>
             </Button>
           }
         />
       )}
-      <DialogContent className='sm:max-w-125 rounded-3xl p-0 overflow-hidden shadow-elevation-4'>
-        <DialogHeader className='p-6 pb-4 border-b bg-linear-to-br from-muted/60 to-transparent'>
+      <DialogContent className='shadow-elevation-4 overflow-hidden rounded-3xl p-0 sm:max-w-125'>
+        <DialogHeader className='from-muted/60 border-b bg-linear-to-br to-transparent p-6 pb-4'>
           <div className='flex items-center gap-3'>
-            <div className='w-11 h-11 rounded-2xl bg-linear-to-br from-primary to-secondary flex items-center justify-center shadow-elevation-2'>
+            <div className='from-primary to-secondary shadow-elevation-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br'>
               <Sparkles className='h-5 w-5 text-white' />
             </div>
             <DialogTitle className='text-xl font-bold'>新建任务</DialogTitle>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='p-6 space-y-5'>
+        <form onSubmit={handleSubmit} className='space-y-5 p-6'>
           <div className='space-y-2'>
-            <Label htmlFor='title' className='text-sm font-semibold text-foreground'>
+            <Label htmlFor='title' className='text-foreground text-sm font-semibold'>
               任务标题 <span className='text-destructive'>*</span>
             </Label>
             <Input
@@ -142,13 +144,13 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
               placeholder='输入任务标题...'
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className='h-12 px-4 text-base rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all'
+              className='border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background h-12 rounded-2xl border-2 px-4 text-base transition-all'
               autoFocus
             />
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='description' className='text-sm font-semibold text-foreground'>
+            <Label htmlFor='description' className='text-foreground text-sm font-semibold'>
               描述 <span className='text-muted-foreground font-normal'>（可选）</span>
             </Label>
             <Textarea
@@ -158,16 +160,16 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setDescription(e.target.value)
               }
-              className='min-h-25 px-4 py-3 rounded-2xl border-2 border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background transition-all resize-none'
+              className='border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background min-h-25 resize-none rounded-2xl border-2 px-4 py-3 transition-all'
             />
           </div>
 
           <div className='space-y-2'>
             <Label
               htmlFor='dueDate'
-              className='text-sm font-semibold text-foreground flex items-center gap-2'
+              className='text-foreground flex items-center gap-2 text-sm font-semibold'
             >
-              <CalendarIcon className='h-4 w-4 text-muted-foreground' />
+              <CalendarIcon className='text-muted-foreground h-4 w-4' />
               截止日期 <span className='text-muted-foreground font-normal'>（可选）</span>
             </Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -178,7 +180,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
                     type='button'
                     variant='outline'
                     className={cn(
-                      'w-full h-12 px-4 rounded-2xl border-2 border-border bg-card shadow-elevation-1 justify-start text-left font-normal hover:bg-muted/40 focus:border-primary/30 transition-all',
+                      'border-border bg-card shadow-elevation-1 hover:bg-muted/40 focus:border-primary/30 h-12 w-full justify-start rounded-2xl border-2 px-4 text-left font-normal transition-all',
                       !dueDate && 'text-muted-foreground',
                     )}
                   >
@@ -188,7 +190,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
                 }
               />
               <PopoverContent
-                className='w-full min-w-[320px] p-3 rounded-2xl shadow-elevation-3'
+                className='shadow-elevation-3 w-full min-w-[320px] rounded-2xl p-3'
                 align='start'
               >
                 <div className='w-full'>
@@ -200,26 +202,26 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
                       setCalendarOpen(false)
                     }}
                     initialFocus
-                    className='rounded-2xl w-full'
+                    className='w-full rounded-2xl'
                   />
                 </div>
               </PopoverContent>
             </Popover>
           </div>
 
-          <div className='flex items-center gap-3 p-4 rounded-2xl bg-muted/60'>
+          <div className='bg-muted/60 flex items-center gap-3 rounded-2xl p-4'>
             <button
               type='button'
               onClick={() => setImportant(!important)}
               className={cn(
-                'shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200',
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200',
                 important
-                  ? 'bg-yellow-500 border-yellow-500 shadow-elevation-1'
+                  ? 'shadow-elevation-1 border-yellow-500 bg-yellow-500'
                   : 'border-muted-foreground/30 hover:border-yellow-500',
               )}
             >
               {important && (
-                <svg className='w-3.5 h-3.5 text-white' fill='currentColor' viewBox='0 0 20 20'>
+                <svg className='h-3.5 w-3.5 text-white' fill='currentColor' viewBox='0 0 20 20'>
                   <path
                     fillRule='evenodd'
                     d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
@@ -230,7 +232,7 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
             </button>
             <Label
               htmlFor='important'
-              className='text-sm font-medium cursor-pointer flex-1'
+              className='flex-1 cursor-pointer text-sm font-medium'
               onClick={() => setImportant(!important)}
             >
               标记为重要
@@ -249,14 +251,14 @@ export function AddTodoDialog({ onAdd, trigger }: AddTodoDialogProps) {
               type='button'
               variant='outline'
               onClick={() => handleOpenChange(false)}
-              className='h-11 px-6 rounded-2xl font-medium'
+              className='h-11 rounded-2xl px-6 font-medium'
             >
               取消
             </Button>
             <Button
               type='submit'
               disabled={!title.trim() || isSubmitting}
-              className='h-11 px-8 rounded-2xl bg-linear-to-r from-primary to-secondary hover:opacity-90 transition-all shadow-elevation-2 disabled:opacity-50 font-semibold'
+              className='from-primary to-secondary shadow-elevation-2 h-11 rounded-2xl bg-linear-to-r px-8 font-semibold transition-all hover:opacity-90 disabled:opacity-50'
             >
               {isSubmitting ? '添加中...' : '添加任务'}
             </Button>
