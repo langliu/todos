@@ -147,7 +147,7 @@ export function TodoItem({
                 {completedSubtasks}/{totalSubtasks} 子任务
               </span>
             </button>
-          ) : !isExpanded ? (
+          ) : !isExpanded && !todo.completed ? (
             <button
               type='button'
               onClick={() => setIsExpanded(true)}
@@ -212,7 +212,7 @@ export function TodoItem({
           <Suspense
             fallback={<div className='text-muted-foreground py-2 text-xs'>加载子任务中...</div>}
           >
-            <LazySubtaskList todoId={todo.id} subtasks={subtasks} />
+            <LazySubtaskList todoId={todo.id} subtasks={subtasks} readOnly={todo.completed} />
           </Suspense>
         </div>
       )}

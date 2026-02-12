@@ -179,6 +179,7 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
 
   const handleAddSubtask = (e: React.FormEvent) => {
     e.preventDefault()
+    if (readOnly) return
     if (!newSubtaskTitle.trim()) return
 
     createSubtaskMutation.mutate({

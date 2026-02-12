@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   Sun,
@@ -13,17 +13,25 @@ import {
   Settings,
   Tag as TagIcon,
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { TodoListItem, UpdateTodoInput } from '@/data/todos.server'
+import type { TodoListType, UpdateTodoInput } from '@/data/todos.server'
 import type { Todo } from '@/lib/supabase'
 
 import { TodoItem } from '@/components/TodoItem'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getCurrentUser, signOut } from '@/data/auth.server'
+import { signOut } from '@/data/auth.server'
 import { getTags } from '@/data/tags.server'
-import { getTodos, createTodo, updateTodo, deleteTodo } from '@/data/todos.server'
+import {
+  getTodoListCounts,
+  getTodosPageData,
+  getTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo,
+  TODOS_PAGE_SIZE,
+} from '@/data/todos.server'
 
 const LazyAddTodoDialog = lazy(async () => {
   const module = await import('@/components/AddTodoDialog')
@@ -37,70 +45,126 @@ const LazyEditTodoDialog = lazy(async () => {
 
 export const Route = createFileRoute('/')({
   component: TodosPage,
-  loader: async () => {
-    const [todos, user] = await Promise.all([getTodos(), getCurrentUser()])
-    return { todos, user }
-  },
+  loader: async () => await getTodosPageData(),
 })
 
 function TodosPage() {
-  const { todos: initialTodos, user } = Route.useLoaderData()
+  const {
+    todos: initialTodos,
+    tags: initialTags,
+    counts: initialCounts,
+    user,
+  } = Route.useLoaderData()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedList, setSelectedList] = useState('my-day')
+  const deferredSearchQuery = useDeferredValue(searchQuery.trim())
+  const [selectedList, setSelectedList] = useState<TodoListType>('my-day')
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
-  const [todos, setTodos] = useState<TodoListItem[]>(initialTodos)
+  const todoListScrollRef = useRef<HTMLDivElement | null>(null)
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null)
+  const todosQueryKey = ['todos', selectedList, deferredSearchQuery, selectedTagId] as const
+  const tagsQueryKey = ['tags'] as const
+  const countsQueryKey = ['todo-list-counts'] as const
+  const useInitialTodosData = selectedList === 'my-day' && !selectedTagId && !deferredSearchQuery
+
+  const {
+    data: todosPagesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending: isTodosPending,
+  } = useInfiniteQuery({
+    queryKey: todosQueryKey,
+    queryFn: async ({ pageParam }) =>
+      await getTodos({
+        data: {
+          list: selectedList,
+          searchQuery: deferredSearchQuery || undefined,
+          tagId: selectedTagId,
+          limit: TODOS_PAGE_SIZE,
+          offset: pageParam as number,
+        },
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < TODOS_PAGE_SIZE) {
+        return undefined
+      }
+
+      return allPages.length * TODOS_PAGE_SIZE
+    },
+    initialData: useInitialTodosData
+      ? {
+          pages: [initialTodos],
+          pageParams: [0],
+        }
+      : undefined,
+    placeholderData: (previousData) => previousData,
+  })
+  const todos = useMemo(() => todosPagesData?.pages.flat() || [], [todosPagesData])
+
+  useEffect(() => {
+    const root = todoListScrollRef.current
+    const target = loadMoreSentinelRef.current
+
+    if (!root || !target || !hasNextPage) {
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (!entry?.isIntersecting || isFetchingNextPage) {
+          return
+        }
+        void fetchNextPage()
+      },
+      {
+        root,
+        rootMargin: '240px 0px',
+        threshold: 0.01,
+      },
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, todos.length])
 
   const { data: tags = [] } = useQuery({
-    queryKey: ['tags'],
+    queryKey: tagsQueryKey,
     queryFn: getTags,
+    initialData: initialTags,
+  })
+
+  const { data: listCounts = initialCounts } = useQuery({
+    queryKey: countsQueryKey,
+    queryFn: getTodoListCounts,
+    initialData: initialCounts,
   })
 
   const createMutation = useMutation({
     mutationFn: createTodo,
-    onSuccess: (result, variables) => {
-      const selectedTags = tags.filter((tag) => variables.data.tagIds?.includes(tag.id))
-      setTodos((prev) => [
-        {
-          ...result,
-          tags: selectedTags,
-          subtask_count: 0,
-          subtask_completed_count: 0,
-        },
-        ...prev,
-      ])
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['todos'] })
+      void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
     },
   })
 
   const updateMutation = useMutation({
     mutationFn: updateTodo,
-    onSuccess: (result, variables) => {
-      setTodos((prev) =>
-        prev.map((todo) => {
-          if (todo.id !== variables.data.id) {
-            return todo
-          }
-
-          const nextTagIds = variables.data.data.tagIds
-          const nextTags =
-            nextTagIds === undefined ? todo.tags : tags.filter((tag) => nextTagIds.includes(tag.id))
-
-          return {
-            ...todo,
-            ...result,
-            tags: nextTags,
-          }
-        }),
-      )
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['todos'] })
+      void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteTodo,
-    onSuccess: (_result, variables) => {
-      setTodos((prev) => prev.filter((todo) => todo.id !== variables.data.id))
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['todos'] })
+      void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
     },
   })
 
@@ -145,60 +209,6 @@ function TodosPage() {
     setEditingTodo(null)
   }
 
-  const filteredTodos = useMemo(() => {
-    return todos.filter((todo) => {
-      const matchesSearch = todo.title.toLowerCase().includes(searchQuery.toLowerCase())
-
-      if (selectedTagId) {
-        const hasTag = todo.tags.some((tag) => tag.id === selectedTagId)
-        if (!hasTag) return false
-      }
-
-      switch (selectedList) {
-        case 'my-day':
-          return matchesSearch && !todo.completed
-        case 'important':
-          return matchesSearch && todo.important
-        case 'planned':
-          return matchesSearch && todo.due_date
-        case 'tasks':
-          return matchesSearch
-        default:
-          return matchesSearch
-      }
-    })
-  }, [todos, searchQuery, selectedList, selectedTagId])
-
-  const listCounts = useMemo(() => {
-    let myDay = 0
-    let important = 0
-    let planned = 0
-    let tasks = 0
-
-    for (const todo of todos) {
-      if (todo.completed) {
-        continue
-      }
-
-      tasks += 1
-      myDay += 1
-
-      if (todo.important) {
-        important += 1
-      }
-
-      if (todo.due_date) {
-        planned += 1
-      }
-    }
-
-    return {
-      myDay,
-      important,
-      planned,
-      tasks,
-    }
-  }, [todos])
   const selectedTag = useMemo(
     () => tags.find((tag) => tag.id === selectedTagId) || null,
     [selectedTagId, tags],
@@ -450,7 +460,7 @@ function TodosPage() {
         )}
       </aside>
 
-      <main className='z-10 flex min-w-0 flex-1 flex-col bg-transparent'>
+      <main className='z-10 flex min-w-0 flex-1 flex-col overflow-hidden bg-transparent'>
         <header className='border-border/70 bg-background/70 sticky top-0 z-10 flex h-20 items-center justify-between border-b px-4 backdrop-blur-xl sm:px-6 md:px-8'>
           <div className='flex items-center gap-4'>
             <div
@@ -486,8 +496,8 @@ function TodosPage() {
           </div>
         </header>
 
-        <div className='flex-1 overflow-auto px-4 py-5 sm:px-6 md:px-8'>
-          <div className='mx-auto max-w-5xl space-y-5 sm:space-y-6'>
+        <div className='flex min-h-0 flex-1 overflow-hidden px-4 py-5 sm:px-6 md:px-8'>
+          <div className='mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-5 overflow-hidden sm:gap-6'>
             <div className='md:hidden'>
               <div className='flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
                 <MobileListChip
@@ -537,7 +547,7 @@ function TodosPage() {
               </div>
             </div>
 
-            <div className='relative'>
+            <div className='bg-background/65 sticky top-0 z-10 -mx-1 flex-none rounded-2xl px-1 py-0.5 backdrop-blur-sm'>
               <Search className='text-muted-foreground absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2' />
               <Input
                 placeholder='搜索任务...'
@@ -547,38 +557,60 @@ function TodosPage() {
               />
             </div>
 
-            <div className='border-border/75 bg-card/70 shadow-elevation-3 overflow-hidden rounded-3xl border p-3 backdrop-blur-sm sm:p-4'>
-              {filteredTodos.length === 0 ? (
-                <EmptyState icon={getListIcon()} {...getEmptyStateMessage()} />
-              ) : (
-                <div className='space-y-3'>
-                  {filteredTodos.map((todo, index: number) => (
-                    <div
-                      key={todo.id}
-                      className='animate-slide-up'
-                      style={{ animationDelay: `${index * 60}ms` }}
-                    >
-                      <TodoItem
-                        todo={todo}
-                        tags={todo.tags}
-                        subtaskCount={todo.subtask_count}
-                        subtaskCompletedCount={todo.subtask_completed_count}
-                        onToggle={handleToggle}
-                        onToggleImportant={handleToggleImportant}
-                        onDelete={handleDelete}
-                        onEdit={handleEdit}
-                      />
+            <div className='flex min-h-0 flex-1 flex-col gap-4'>
+              <div className='border-border/75 bg-card/70 shadow-elevation-3 flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border p-3 backdrop-blur-sm sm:p-4'>
+                {isTodosPending ? (
+                  <div className='text-muted-foreground py-16 text-center text-sm'>
+                    加载任务中...
+                  </div>
+                ) : todos.length === 0 ? (
+                  <EmptyState icon={getListIcon()} {...getEmptyStateMessage()} />
+                ) : (
+                  <div ref={todoListScrollRef} className='min-h-0 flex-1 overflow-y-auto pr-1'>
+                    <div className='space-y-3'>
+                      {todos.map((todo, index: number) => (
+                        <div
+                          key={todo.id}
+                          className='animate-slide-up'
+                          style={{ animationDelay: `${index * 60}ms` }}
+                        >
+                          <TodoItem
+                            todo={todo}
+                            tags={todo.tags}
+                            subtaskCount={todo.subtask_count}
+                            subtaskCompletedCount={todo.subtask_completed_count}
+                            onToggle={handleToggle}
+                            onToggleImportant={handleToggleImportant}
+                            onDelete={handleDelete}
+                            onEdit={handleEdit}
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    {hasNextPage && <div ref={loadMoreSentinelRef} className='h-1 w-full' />}
+
+                    {hasNextPage && (
+                      <div className='mt-4 flex justify-center'>
+                        <Button
+                          variant='outline'
+                          onClick={() => void fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                          className='rounded-xl'
+                        >
+                          {isFetchingNextPage ? '加载中...' : '加载更多'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {todos.length > 0 && (
+                <p className='text-muted-foreground flex-none py-1 text-center text-sm'>
+                  {hasNextPage ? `已显示 ${todos.length} 个任务` : `共 ${todos.length} 个任务`}
+                </p>
               )}
             </div>
-
-            {filteredTodos.length > 0 && (
-              <p className='text-muted-foreground py-2 text-center text-sm'>
-                共 {filteredTodos.length} 个任务
-              </p>
-            )}
           </div>
         </div>
       </main>

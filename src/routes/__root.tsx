@@ -41,7 +41,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60_000,
+            gcTime: 10 * 60_000,
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  )
 
   return (
     <html lang='zh-CN' suppressHydrationWarning>

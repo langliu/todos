@@ -7,7 +7,7 @@ import type { Tag, Todo } from '@/lib/supabase'
 
 import { authMiddleware } from '@/lib/auth'
 
-import { updateTodoTags } from './tags.server'
+import { syncTodoTags } from './tags.server'
 
 export type CreateTodoInput = {
   title: string
@@ -26,6 +26,18 @@ export type UpdateTodoInput = {
   tagIds?: string[]
 }
 
+export type TodoListType = 'my-day' | 'important' | 'planned' | 'tasks'
+
+export const TODOS_PAGE_SIZE = 50
+
+export type GetTodosInput = {
+  searchQuery?: string
+  list?: TodoListType
+  tagId?: string | null
+  limit?: number
+  offset?: number
+}
+
 type AuthContext = {
   user: User
   userId: string
@@ -38,82 +50,256 @@ export type TodoListItem = Todo & {
   subtask_completed_count: number
 }
 
+export type TodoPageUser = {
+  id: string
+  email: string | null
+}
+
+export type TodoListCounts = {
+  myDay: number
+  important: number
+  planned: number
+  tasks: number
+}
+
+export type TodosPageData = {
+  todos: TodoListItem[]
+  tags: Tag[]
+  counts: TodoListCounts
+  user: TodoPageUser
+}
+
 type CompletedSubtaskCountRow = {
   todo_id: string
   completed_count: number | string | null
 }
 
-export const getTodos = createServerFn({ method: 'GET' })
-  .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<TodoListItem[]> => {
-    const { supabase, userId } = context as AuthContext
+type TodoTagIdRow = {
+  todo_id: string
+}
 
-    const { data: todosData, error: todosError } = await supabase
-      .from('todos')
-      .select(`
+async function queryTodoList(
+  supabase: SupabaseClient,
+  userId: string,
+  input?: GetTodosInput,
+): Promise<TodoListItem[]> {
+  const list = input?.list ?? 'my-day'
+  const searchQuery = input?.searchQuery?.trim()
+  const tagId = input?.tagId || null
+  const offset = Math.max(0, input?.offset ?? 0)
+  const limit =
+    typeof input?.limit === 'number' && Number.isFinite(input.limit) && input.limit > 0
+      ? Math.min(Math.floor(input.limit), 200)
+      : undefined
+
+  let filteredTodoIds: string[] | null = null
+  if (tagId) {
+    const { data: todoTagRows, error: todoTagError } = await supabase
+      .from('todo_tags')
+      .select('todo_id')
+      .eq('tag_id', tagId)
+
+    if (todoTagError) {
+      throw new Error(todoTagError.message)
+    }
+
+    filteredTodoIds = [
+      ...new Set(((todoTagRows || []) as TodoTagIdRow[]).map((row) => row.todo_id)),
+    ]
+    if (filteredTodoIds.length === 0) {
+      return []
+    }
+  }
+
+  let query = supabase
+    .from('todos')
+    .select(`
         *,
         todo_tags (
           tags (*)
         ),
         subtasks(count)
       `)
+    .eq('user_id', userId)
+    .order('important', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (filteredTodoIds) {
+    query = query.in('id', filteredTodoIds)
+  }
+
+  if (searchQuery) {
+    query = query.ilike('title', `%${searchQuery}%`)
+  }
+
+  switch (list) {
+    case 'my-day':
+      query = query.eq('completed', false)
+      break
+    case 'important':
+      query = query.eq('important', true)
+      break
+    case 'planned':
+      query = query.not('due_date', 'is', null)
+      break
+    case 'tasks':
+      break
+    default:
+      break
+  }
+
+  if (limit !== undefined) {
+    query = query.range(offset, offset + limit - 1)
+  }
+
+  const { data: todosData, error: todosError } = await query
+
+  if (todosError) {
+    throw new Error(todosError.message)
+  }
+
+  type TodoQueryRow = Todo & {
+    todo_tags?: Array<{ tags: Tag | null }> | null
+    subtasks?: Array<{ count: number | null }> | null
+  }
+
+  const todoRows = (todosData || []) as TodoQueryRow[]
+  const todoIds = todoRows.map((row) => row.id)
+
+  const completedCountByTodoId = new Map<string, number>()
+  if (todoIds.length > 0) {
+    const { data: completedRows, error: completedError } = await supabase.rpc(
+      'get_completed_subtask_counts',
+      {
+        p_todo_ids: todoIds,
+      },
+    )
+
+    if (completedError) {
+      throw new Error(completedError.message)
+    }
+
+    for (const row of (completedRows || []) as CompletedSubtaskCountRow[]) {
+      completedCountByTodoId.set(row.todo_id, Number(row.completed_count || 0))
+    }
+  }
+
+  return todoRows.map((row) => {
+    const tags = (row.todo_tags || [])
+      .map((item) => item.tags)
+      .filter((tag): tag is Tag => Boolean(tag))
+
+    const subtaskCount = row.subtasks?.[0]?.count || 0
+    const subtaskCompletedCount = completedCountByTodoId.get(row.id) || 0
+
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      title: row.title,
+      description: row.description,
+      completed: row.completed,
+      important: row.important,
+      due_date: row.due_date,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      tags,
+      subtask_count: subtaskCount,
+      subtask_completed_count: subtaskCompletedCount,
+    }
+  })
+}
+
+async function queryUserTags(supabase: SupabaseClient, userId: string): Promise<Tag[]> {
+  const { data, error } = await supabase
+    .from('tags')
+    .select('*')
+    .eq('user_id', userId)
+    .order('name', { ascending: true })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return data || []
+}
+
+async function queryTodoListCounts(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<TodoListCounts> {
+  const [tasksResult, importantResult, plannedResult] = await Promise.all([
+    supabase
+      .from('todos')
+      .select('id', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .order('important', { ascending: false })
-      .order('created_at', { ascending: false })
+      .eq('completed', false),
+    supabase
+      .from('todos')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('completed', false)
+      .eq('important', true),
+    supabase
+      .from('todos')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('completed', false)
+      .not('due_date', 'is', null),
+  ])
 
-    if (todosError) {
-      throw new Error(todosError.message)
+  if (tasksResult.error) {
+    throw new Error(tasksResult.error.message)
+  }
+  if (importantResult.error) {
+    throw new Error(importantResult.error.message)
+  }
+  if (plannedResult.error) {
+    throw new Error(plannedResult.error.message)
+  }
+
+  const tasks = tasksResult.count || 0
+  return {
+    myDay: tasks,
+    tasks,
+    important: importantResult.count || 0,
+    planned: plannedResult.count || 0,
+  }
+}
+
+export const getTodos = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .inputValidator((input?: GetTodosInput) => input)
+  .handler(async ({ context, data }): Promise<TodoListItem[]> => {
+    const { supabase, userId } = context as AuthContext
+    return queryTodoList(supabase, userId, data)
+  })
+
+export const getTodoListCounts = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<TodoListCounts> => {
+    const { supabase, userId } = context as AuthContext
+    return queryTodoListCounts(supabase, userId)
+  })
+
+export const getTodosPageData = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<TodosPageData> => {
+    const { supabase, userId, user } = context as AuthContext
+    const [todos, tags, counts] = await Promise.all([
+      queryTodoList(supabase, userId, { list: 'my-day', limit: TODOS_PAGE_SIZE, offset: 0 }),
+      queryUserTags(supabase, userId),
+      queryTodoListCounts(supabase, userId),
+    ])
+
+    return {
+      todos,
+      tags,
+      counts,
+      user: {
+        id: user.id,
+        email: user.email ?? null,
+      },
     }
-
-    type TodoQueryRow = Todo & {
-      todo_tags?: Array<{ tags: Tag | null }> | null
-      subtasks?: Array<{ count: number | null }> | null
-    }
-
-    const todoRows = (todosData || []) as TodoQueryRow[]
-    const todoIds = todoRows.map((row) => row.id)
-
-    const completedCountByTodoId = new Map<string, number>()
-    if (todoIds.length > 0) {
-      const { data: completedRows, error: completedError } = await supabase.rpc(
-        'get_completed_subtask_counts',
-        {
-          p_todo_ids: todoIds,
-        },
-      )
-
-      if (completedError) {
-        throw new Error(completedError.message)
-      }
-
-      for (const row of (completedRows || []) as CompletedSubtaskCountRow[]) {
-        completedCountByTodoId.set(row.todo_id, Number(row.completed_count || 0))
-      }
-    }
-
-    return todoRows.map((row) => {
-      const tags = (row.todo_tags || [])
-        .map((item) => item.tags)
-        .filter((tag): tag is Tag => Boolean(tag))
-
-      const subtaskCount = row.subtasks?.[0]?.count || 0
-      const subtaskCompletedCount = completedCountByTodoId.get(row.id) || 0
-
-      return {
-        id: row.id,
-        user_id: row.user_id,
-        title: row.title,
-        description: row.description,
-        completed: row.completed,
-        important: row.important,
-        due_date: row.due_date,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-        tags,
-        subtask_count: subtaskCount,
-        subtask_completed_count: subtaskCompletedCount,
-      }
-    })
   })
 
 export const createTodo = createServerFn({ method: 'POST' })
@@ -139,12 +325,7 @@ export const createTodo = createServerFn({ method: 'POST' })
     }
 
     if (data.tagIds && data.tagIds.length > 0) {
-      await updateTodoTags({
-        data: {
-          todoId: todo.id,
-          tagIds: data.tagIds,
-        },
-      })
+      await syncTodoTags(supabase, todo.id, data.tagIds)
     }
 
     return todo
@@ -171,12 +352,7 @@ export const updateTodo = createServerFn({ method: 'POST' })
     }
 
     if (tagIds !== undefined) {
-      await updateTodoTags({
-        data: {
-          todoId: inputData.id,
-          tagIds,
-        },
-      })
+      await syncTodoTags(supabase, inputData.id, tagIds)
     }
 
     return todo

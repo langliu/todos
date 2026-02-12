@@ -112,30 +112,16 @@ export const reorderSubtasks = createServerFn({ method: 'POST' })
     }
 
     const subtaskIds = inputData.subtasks.map((subtask) => subtask.id)
+    const subtaskOrders = inputData.subtasks.map((subtask) => subtask.order)
 
-    const { count, error: countError } = await supabase
-      .from('subtasks')
-      .select('id', { count: 'exact', head: true })
-      .eq('todo_id', inputData.todoId)
-      .in('id', subtaskIds)
+    const { error } = await supabase.rpc('reorder_subtasks_batch', {
+      p_todo_id: inputData.todoId,
+      p_subtask_ids: subtaskIds,
+      p_orders: subtaskOrders,
+    })
 
-    if (countError) {
-      throw new Error(countError.message)
-    }
-
-    if (count !== subtaskIds.length) {
-      throw new Error('子任务列表已发生变化，请刷新后重试')
-    }
-
-    const results = await Promise.all(
-      inputData.subtasks.map(({ id, order }) =>
-        supabase.from('subtasks').update({ order }).eq('id', id).eq('todo_id', inputData.todoId),
-      ),
-    )
-
-    const failedResult = results.find((result) => result.error)
-    if (failedResult?.error) {
-      throw new Error(failedResult.error.message)
+    if (error) {
+      throw new Error(error.message)
     }
   })
 

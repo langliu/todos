@@ -52,7 +52,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
     queryFn: getTags,
   })
 
-  const { data: todoTags = [], refetch: refetchTodoTags } = useQuery({
+  const { data: todoTags = [] } = useQuery({
     queryKey: ['todoTags', todo.id],
     queryFn: () => getTodoTags({ data: { todoId: todo.id } }),
     enabled: open,
@@ -73,9 +73,8 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
       setDescription(todo.description || '')
       setDueDate(todo.due_date ? new Date(todo.due_date) : undefined)
       setImportant(todo.important)
-      refetchTodoTags()
     }
-  }, [open, todo, refetchTodoTags])
+  }, [open, todo])
 
   useEffect(() => {
     setSelectedTagIds(todoTags.map((tag) => tag.id))

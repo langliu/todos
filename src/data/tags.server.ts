@@ -31,6 +31,23 @@ type TagWithCountQueryRow = Tag & {
   todo_tags?: Array<{ count: number | null }> | null
 }
 
+export async function syncTodoTags(
+  supabase: SupabaseClient,
+  todoId: string,
+  tagIds: string[],
+): Promise<void> {
+  const normalizedTagIds = [...new Set(tagIds)]
+
+  const { error } = await supabase.rpc('sync_todo_tags', {
+    p_todo_id: todoId,
+    p_tag_ids: normalizedTagIds,
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+}
+
 export const getTags = createServerFn({ method: 'GET' })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<Tag[]> => {
@@ -168,28 +185,7 @@ export const updateTodoTags = createServerFn({ method: 'POST' })
   .inputValidator((input: { todoId: string; tagIds: string[] }) => input)
   .handler(async ({ context, data: inputData }): Promise<void> => {
     const { supabase } = context as AuthContext
-
-    const { error: deleteError } = await supabase
-      .from('todo_tags')
-      .delete()
-      .eq('todo_id', inputData.todoId)
-
-    if (deleteError) {
-      throw new Error(deleteError.message)
-    }
-
-    if (inputData.tagIds.length > 0) {
-      const { error: insertError } = await supabase.from('todo_tags').insert(
-        inputData.tagIds.map((tagId) => ({
-          todo_id: inputData.todoId,
-          tag_id: tagId,
-        })),
-      )
-
-      if (insertError) {
-        throw new Error(insertError.message)
-      }
-    }
+    await syncTodoTags(supabase, inputData.todoId, inputData.tagIds)
   })
 
 export const getTagsWithCounts = createServerFn({ method: 'GET' })

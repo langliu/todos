@@ -1,12 +1,16 @@
 import { redirect } from '@tanstack/react-router'
 import { createMiddleware } from '@tanstack/react-start'
 
-import { createServerSupabaseClient, getServerUser } from './supabase.server'
+import { createServerSupabaseClient } from './supabase.server'
 
 export const authMiddleware = createMiddleware({ type: 'function' }).server(async ({ next }) => {
-  const user = await getServerUser()
+  const supabase = createServerSupabaseClient()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (error || !user) {
     throw redirect({ to: '/auth/login' })
   }
 
@@ -14,7 +18,7 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(asyn
     context: {
       user,
       userId: user.id,
-      supabase: createServerSupabaseClient(),
+      supabase,
     },
   })
 })
@@ -22,13 +26,16 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(asyn
 export const optionalAuthMiddleware = createMiddleware({
   type: 'function',
 }).server(async ({ next }) => {
-  const user = await getServerUser()
   const supabase = createServerSupabaseClient()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
   return next({
     context: {
-      user,
-      userId: user?.id ?? null,
+      user: error ? null : user,
+      userId: error ? null : (user?.id ?? null),
       supabase,
     },
   })
