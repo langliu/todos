@@ -2,6 +2,8 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   Sun,
+  Moon,
+  Monitor,
   Star,
   Calendar,
   Home,
@@ -14,6 +16,7 @@ import {
   Settings,
   Tag as TagIcon,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -63,6 +66,7 @@ function TodosPage() {
   } = Route.useLoaderData()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const deferredSearchQuery = useDeferredValue(searchQuery.trim())
   const [selectedList, setSelectedList] = useState<TodoListType>('my-day')
@@ -80,6 +84,7 @@ function TodosPage() {
   const remindersQueryKey = ['due-todo-reminders'] as const
   const useInitialTodosData = selectedList === 'my-day' && !selectedTagId && !deferredSearchQuery
   const hasNotificationApi = isClient && typeof window !== 'undefined' && 'Notification' in window
+  const selectedTheme = isClient ? (theme ?? 'system') : 'system'
 
   const {
     data: todosPagesData,
@@ -616,6 +621,38 @@ function TodosPage() {
                 开启提醒
               </Button>
             )}
+            <div className='border-border/70 bg-card/70 shadow-elevation-1 hidden items-center gap-1 rounded-2xl border p-1 backdrop-blur-sm sm:flex'>
+              <Button
+                type='button'
+                size='icon'
+                variant={selectedTheme === 'light' ? 'default' : 'ghost'}
+                aria-label='切换浅色主题'
+                className='h-9 w-9 rounded-xl'
+                onClick={() => setTheme('light')}
+              >
+                <Sun className='h-4 w-4' />
+              </Button>
+              <Button
+                type='button'
+                size='icon'
+                variant={selectedTheme === 'dark' ? 'default' : 'ghost'}
+                aria-label='切换深色主题'
+                className='h-9 w-9 rounded-xl'
+                onClick={() => setTheme('dark')}
+              >
+                <Moon className='h-4 w-4' />
+              </Button>
+              <Button
+                type='button'
+                size='icon'
+                variant={selectedTheme === 'system' ? 'default' : 'ghost'}
+                aria-label='切换自动主题'
+                className='h-9 w-9 rounded-xl'
+                onClick={() => setTheme('system')}
+              >
+                <Monitor className='h-4 w-4' />
+              </Button>
+            </div>
             <Suspense
               fallback={
                 <Button

@@ -1,7 +1,20 @@
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeft, CheckCircle2, Loader2, Settings, Shield, User, Check, X } from 'lucide-react'
-import { useState } from 'react'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  Settings,
+  Shield,
+  User,
+  Check,
+  X,
+  Monitor,
+  Sun,
+  Moon,
+} from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -23,11 +36,17 @@ export const Route = createFileRoute('/settings')({
 
 function SettingsPage() {
   const user = Route.useLoaderData()
+  const { theme, resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const updatePasswordMutation = useMutation({
     mutationFn: updatePassword,
@@ -69,6 +88,8 @@ function SettingsPage() {
   const isLengthValid = newPassword.length >= 6
   const isDifferent = newPassword !== currentPassword && currentPassword !== ''
   const isMatch = newPassword === confirmPassword && newPassword !== ''
+  const selectedTheme = mounted ? (theme ?? 'system') : 'system'
+  const appliedTheme = mounted ? (resolvedTheme ?? 'light') : 'light'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,6 +164,56 @@ function SettingsPage() {
             </CardContent>
           </Card>
         )}
+
+        <Card className='border-border/60 shadow-elevation-2 mb-6 overflow-hidden border-2'>
+          <CardHeader className='from-muted/50 border-b bg-linear-to-r to-transparent'>
+            <CardTitle className='text-xl'>外观主题</CardTitle>
+            <CardDescription>支持浅色、深色与自动跟随系统</CardDescription>
+          </CardHeader>
+
+          <CardContent className='space-y-4 p-6'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+              <Button
+                type='button'
+                variant={selectedTheme === 'light' ? 'default' : 'outline'}
+                className='h-11 rounded-xl'
+                onClick={() => setTheme('light')}
+              >
+                <Sun className='mr-2 h-4 w-4' />
+                浅色
+              </Button>
+              <Button
+                type='button'
+                variant={selectedTheme === 'dark' ? 'default' : 'outline'}
+                className='h-11 rounded-xl'
+                onClick={() => setTheme('dark')}
+              >
+                <Moon className='mr-2 h-4 w-4' />
+                深色
+              </Button>
+              <Button
+                type='button'
+                variant={selectedTheme === 'system' ? 'default' : 'outline'}
+                className='h-11 rounded-xl'
+                onClick={() => setTheme('system')}
+              >
+                <Monitor className='mr-2 h-4 w-4' />
+                自动
+              </Button>
+            </div>
+
+            <p className='text-muted-foreground text-sm'>
+              当前设置：
+              <span className='text-foreground mx-1 font-medium'>
+                {selectedTheme === 'system' ? '自动' : selectedTheme === 'dark' ? '深色' : '浅色'}
+              </span>
+              · 实际生效：
+              <span className='text-foreground ml-1 font-medium'>
+                {appliedTheme === 'dark' ? '深色' : '浅色'}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
 
         <Card className='border-border/60 shadow-elevation-2 overflow-hidden border-2'>
           <CardHeader className='from-muted/50 border-b bg-linear-to-r to-transparent'>
