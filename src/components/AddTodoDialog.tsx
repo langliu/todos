@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
-import { getTags, createTag } from '@/data/tags.server'
+import { getTags, createTag } from '@/data/tags'
 import { TODO_REMINDER_OPTIONS } from '@/lib/todo-reminder'
 import { cn } from '@/lib/utils'
 

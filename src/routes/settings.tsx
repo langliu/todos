@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { updatePassword, getCurrentUser } from '@/data/auth.server'
+import { updatePassword, getCurrentUser } from '@/data/auth'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,

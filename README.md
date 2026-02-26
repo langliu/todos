@@ -9,6 +9,48 @@ bun install
 bun --bun run dev
 ```
 
+## Convex 开发脚本
+
+项目在 `package.json` 中新增了以下 Convex 脚本：
+
+```bash
+bun run convex:dev
+bun run convex:dev:local
+bun run convex:dev:local:init
+bun run convex:deploy
+```
+
+说明如下：
+
+1. `bun run convex:dev`
+   - 启动 Convex 开发模式（默认使用当前配置的 deployment）。
+   - 会监听 `convex/` 目录改动并自动同步函数定义。
+
+2. `bun run convex:dev:local`
+   - 使用本地 Local Deployment 运行 Convex。
+   - 适合纯本地联调，不依赖远端环境。
+
+3. `bun run convex:dev:local:init`
+   - 一次性初始化/更新本地 Local Deployment（`--once`）。
+   - 常用于首次切到本地模式或需要重建本地 deployment 时。
+
+4. `bun run convex:deploy`
+   - 将当前 Convex 函数和 schema 部署到远端。
+   - 通常在本地验证通过后再执行。
+
+推荐本地开发流程：
+
+```bash
+# 终端 1: 前端
+bun --bun run dev
+
+# 终端 2: Convex 本地初始化（首次）
+bun run convex:dev:local:init
+
+# 终端 2: Convex 本地常驻
+bun run convex:dev:local
+```
+
 # Building For Production
 
 To build this application for production:

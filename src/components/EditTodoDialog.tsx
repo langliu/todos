@@ -4,7 +4,7 @@ import { zhCN } from 'date-fns/locale'
 import { Sparkles, Calendar as CalendarIcon, BellRing } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-import type { Todo } from '@/lib/supabase'
+import type { Todo } from '@/lib/types'
 
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
-import { getTags, createTag, getTodoTags } from '@/data/tags.server'
+import { getTags, createTag, getTodoTags } from '@/data/tags'
 import { TODO_REMINDER_OPTIONS } from '@/lib/todo-reminder'
 import { cn } from '@/lib/utils'
 

@@ -1,4 +1,4 @@
-import type { Tag } from '@/lib/supabase'
+import type { Tag } from '@/lib/types'
 
 interface TagBadgeProps {
   tag: Tag

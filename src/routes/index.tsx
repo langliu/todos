@@ -17,14 +17,14 @@ import {
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import type { TodoListType, UpdateTodoInput } from '@/data/todos.server'
-import type { Todo } from '@/lib/supabase'
+import type { TodoListType, UpdateTodoInput } from '@/data/todos'
+import type { Todo } from '@/lib/types'
 
 import { TodoItem } from '@/components/TodoItem'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { signOut } from '@/data/auth.server'
-import { getTags } from '@/data/tags.server'
+import { signOut } from '@/data/auth'
+import { getTags } from '@/data/tags'
 import {
   getTodoListCounts,
   getDueTodoReminders,
@@ -34,7 +34,7 @@ import {
   updateTodo,
   deleteTodo,
   TODOS_PAGE_SIZE,
-} from '@/data/todos.server'
+} from '@/data/todos'
 import { formatReminderDescription } from '@/lib/todo-reminder'
 
 const LazyAddTodoDialog = lazy(async () => {
@@ -447,8 +447,7 @@ function TodosPage() {
   return (
     <div className='bg-background relative flex h-screen overflow-hidden'>
       <div aria-hidden className='pointer-events-none absolute inset-0'>
-        <div className='absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.18),transparent_48%),radial-gradient(ellipse_at_bottom_right,rgba(16,185,129,0.14),transparent_56%)]' />
-        <div className='absolute inset-0 bg-[linear-gradient(165deg,rgba(15,23,42,0.2)_0%,rgba(2,6,23,0)_44%)]' />
+        <div className='absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08),transparent_52%),radial-gradient(ellipse_at_bottom_right,rgba(16,185,129,0.06),transparent_60%)]' />
       </div>
 
       <aside className='border-sidebar-border/80 bg-sidebar/85 z-10 hidden w-72 shrink-0 border-r backdrop-blur-xl md:flex md:flex-col'>
@@ -698,7 +697,7 @@ function TodosPage() {
             </div>
 
             <div className='flex min-h-0 flex-1 flex-col gap-4'>
-              <div className='border-border/75 bg-card/70 shadow-elevation-3 flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border p-3 backdrop-blur-sm sm:p-4'>
+              <div className='border-border/75 bg-card/70 flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border p-3 backdrop-blur-sm sm:p-4'>
                 {isTodosPending ? (
                   <div className='text-muted-foreground py-16 text-center text-sm'>
                     加载任务中...

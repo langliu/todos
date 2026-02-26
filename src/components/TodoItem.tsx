@@ -11,11 +11,11 @@ import {
 } from 'lucide-react'
 import { lazy, Suspense, useState } from 'react'
 
-import type { Tag, Todo } from '@/lib/supabase'
+import type { Tag, Todo } from '@/lib/types'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { getSubtasks } from '@/data/subtasks.server'
+import { getSubtasks } from '@/data/subtasks'
 import { formatReminderLabel } from '@/lib/todo-reminder'
 
 import { TagBadge } from './TagBadge'

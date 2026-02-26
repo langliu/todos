@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft, Plus, Edit, Trash2, Tag as TagIcon } from 'lucide-react'
 import { useState } from 'react'
 
-import type { Tag } from '@/lib/supabase'
+import type { Tag } from '@/lib/types'
 
 import {
   AlertDialog,
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getTagsWithCounts, createTag, updateTag, deleteTag } from '@/data/tags.server'
+import { getTagsWithCounts, createTag, updateTag, deleteTag } from '@/data/tags'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/tags')({

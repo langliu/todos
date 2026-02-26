@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Trash2, X } from 'lucide-react'
 
-import type { Subtask } from '@/lib/supabase'
+import type { Subtask } from '@/lib/types'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'

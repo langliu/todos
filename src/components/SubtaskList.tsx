@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
-import type { Subtask } from '@/lib/supabase'
+import type { Subtask } from '@/lib/types'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import {
   updateSubtask,
   toggleSubtaskCompleted,
   reorderSubtasks,
-} from '@/data/subtasks.server'
+} from '@/data/subtasks'
 
 import { SubtaskItem } from './SubtaskItem'
 
