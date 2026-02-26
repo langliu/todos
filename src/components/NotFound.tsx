@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button'
 export default function NotFound() {
   return (
     <div
-      className='from-background via-background to-muted/30 relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br'
+      className='from-background via-background to-muted/30 relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br'
       suppressHydrationWarning
     >
       {/* 装饰性背景元素 */}
       <div className='pointer-events-none absolute inset-0 overflow-hidden'>
         {/* 大圆形渐变 */}
-        <div className='from-primary/10 to-secondary/5 absolute -top-40 -right-40 h-96 w-96 rounded-full bg-gradient-to-br blur-3xl' />
-        <div className='from-secondary/10 to-primary/5 absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-gradient-to-tr blur-3xl' />
+        <div className='from-primary/10 to-secondary/5 absolute -top-40 -right-40 h-96 w-96 rounded-full bg-linear-to-br blur-3xl' />
+        <div className='from-secondary/10 to-primary/5 absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-linear-to-tr blur-3xl' />
 
         {/* 小装饰点 */}
         <div className='bg-primary/30 absolute top-1/4 left-1/4 h-2 w-2 animate-pulse rounded-full' />
@@ -27,11 +27,11 @@ export default function NotFound() {
         <div className='flex justify-center'>
           <div className='relative'>
             {/* 外圈光晕 */}
-            <div className='from-destructive/20 to-warning/20 absolute inset-0 scale-150 rounded-full bg-gradient-to-br blur-2xl' />
+            <div className='from-destructive/20 to-warning/20 absolute inset-0 scale-150 rounded-full bg-linear-to-br blur-2xl' />
 
             {/* 主图标容器 */}
-            <div className='from-destructive/10 via-warning/10 to-destructive/10 border-destructive/20 relative flex h-32 w-32 items-center justify-center rounded-full border bg-gradient-to-br shadow-2xl'>
-              <div className='from-destructive to-warning bg-gradient-to-br bg-clip-text text-6xl font-black text-transparent'>
+            <div className='from-destructive/10 via-warning/10 to-destructive/10 border-destructive/20 relative flex h-32 w-32 items-center justify-center rounded-full border bg-linear-to-br shadow-2xl'>
+              <div className='from-destructive to-warning bg-linear-to-br bg-clip-text text-6xl font-black text-transparent'>
                 404
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function NotFound() {
         <div className='flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row'>
           <Link
             to='/'
-            className='from-primary to-secondary text-primary-foreground inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r px-8 text-base font-semibold shadow-lg transition-all hover:opacity-90 hover:shadow-xl'
+            className='from-primary to-secondary text-primary-foreground inline-flex h-12 items-center justify-center gap-2 rounded-full bg-linear-to-r px-8 text-base font-semibold shadow-lg transition-all hover:opacity-90 hover:shadow-xl'
           >
             <Home className='h-5 w-5' />
             返回首页

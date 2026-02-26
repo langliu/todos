@@ -142,7 +142,7 @@ function TagsPage() {
   }
 
   return (
-    <div className='from-background to-muted/30 min-h-screen bg-gradient-to-br p-4 md:p-8'>
+    <div className='from-background to-muted/30 min-h-screen bg-linear-to-br p-4 md:p-8'>
       <div className='mx-auto max-w-4xl pt-4 md:pt-8'>
         <div className='mb-8 flex items-center justify-between'>
           <div className='flex items-center gap-4'>
@@ -154,7 +154,7 @@ function TagsPage() {
               <ArrowLeft className='h-5 w-5' />
             </Link>
             <div className='flex items-center gap-3'>
-              <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br'>
+              <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br'>
                 <TagIcon className='h-6 w-6 text-white' />
               </div>
               <div>
@@ -230,7 +230,7 @@ function TagsPage() {
         {tags.length === 0 ? (
           <Card className='border-border/60 shadow-elevation-2 overflow-hidden border-2'>
             <CardContent className='p-12 text-center'>
-              <div className='from-muted to-muted/60 shadow-elevation-1 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br'>
+              <div className='from-muted to-muted/60 shadow-elevation-1 mb-6 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-linear-to-br'>
                 <TagIcon className='text-muted-foreground h-10 w-10' />
               </div>
               <h3 className='text-foreground mb-2 text-xl font-semibold'>还没有标签</h3>

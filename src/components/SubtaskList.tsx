@@ -268,7 +268,7 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
         <div className='flex items-center gap-3'>
           <div className='bg-muted h-2 flex-1 overflow-hidden rounded-full'>
             <div
-              className='from-primary to-secondary h-full rounded-full bg-gradient-to-r transition-all duration-300'
+              className='from-primary to-secondary h-full rounded-full bg-linear-to-r transition-all duration-300'
               style={{ width: `${progress}%` }}
             />
           </div>

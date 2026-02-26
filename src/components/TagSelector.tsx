@@ -70,7 +70,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
               size='icon'
               variant='ghost'
               onClick={handleCancelCreate}
-              className='h-10 w-10 flex-shrink-0 rounded-xl'
+              className='h-10 w-10 shrink-0 rounded-xl'
             >
               <X className='h-4 w-4' />
             </Button>
@@ -123,7 +123,7 @@ export function TagSelector({ tags, selectedTagIds, onToggleTag, onCreateTag }: 
                 border: `1px solid ${tag.color}40`,
               }}
             >
-              <span className='max-w-[120px] truncate'>{tag.name}</span>
+              <span className='max-w-30 truncate'>{tag.name}</span>
               {isSelected && (
                 <svg className='h-3.5 w-3.5' fill='currentColor' viewBox='0 0 20 20'>
                   <path

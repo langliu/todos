@@ -104,7 +104,7 @@ function SettingsPage() {
   }
 
   return (
-    <div className='from-background to-muted/30 min-h-screen bg-gradient-to-br p-4 md:p-8'>
+    <div className='from-background to-muted/30 min-h-screen bg-linear-to-br p-4 md:p-8'>
       <div className='mx-auto max-w-2xl pt-4 md:pt-8'>
         <div className='mb-8 flex items-center gap-4'>
           <Link
@@ -115,7 +115,7 @@ function SettingsPage() {
             <ArrowLeft className='h-5 w-5' />
           </Link>
           <div className='flex items-center gap-3'>
-            <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br'>
+            <div className='from-primary to-secondary shadow-elevation-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br'>
               <Settings className='h-6 w-6 text-white' />
             </div>
             <div>
@@ -129,7 +129,7 @@ function SettingsPage() {
           <Card className='border-border/60 shadow-elevation-2 mb-6 border-2'>
             <CardContent className='p-6'>
               <div className='flex items-center gap-4'>
-                <div className='from-primary to-secondary shadow-elevation-1 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br text-xl font-bold text-white'>
+                <div className='from-primary to-secondary shadow-elevation-1 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br text-xl font-bold text-white'>
                   {user.email?.charAt(0).toUpperCase() || <User className='h-8 w-8' />}
                 </div>
                 <div className='min-w-0 flex-1'>
@@ -145,7 +145,7 @@ function SettingsPage() {
         )}
 
         <Card className='border-border/60 shadow-elevation-2 overflow-hidden border-2'>
-          <CardHeader className='from-muted/50 border-b bg-gradient-to-r to-transparent'>
+          <CardHeader className='from-muted/50 border-b bg-linear-to-r to-transparent'>
             <CardTitle className='text-xl'>修改密码</CardTitle>
             <CardDescription>为了账户安全，请定期更新您的密码</CardDescription>
           </CardHeader>
@@ -154,14 +154,14 @@ function SettingsPage() {
             <CardContent className='space-y-6 p-6'>
               {error && (
                 <div className='text-destructive bg-destructive/10 border-destructive/20 animate-in fade-in slide-in-from-top-2 flex items-start gap-3 rounded-xl border p-4 text-sm'>
-                  <X className='mt-0.5 h-5 w-5 flex-shrink-0' />
+                  <X className='mt-0.5 h-5 w-5 shrink-0' />
                   <span>{error}</span>
                 </div>
               )}
 
               {success && (
                 <div className='animate-in fade-in slide-in-from-top-2 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400'>
-                  <CheckCircle2 className='h-5 w-5 flex-shrink-0' />
+                  <CheckCircle2 className='h-5 w-5 shrink-0' />
                   <span>密码修改成功</span>
                 </div>
               )}
@@ -251,9 +251,9 @@ function SettingsPage() {
                     className={`flex items-center gap-2 text-xs ${isLengthValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
                   >
                     {isLengthValid ? (
-                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                      <Check className='h-3.5 w-3.5 shrink-0' />
                     ) : (
-                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                      <X className='h-3.5 w-3.5 shrink-0' />
                     )}
                     <span>至少 6 个字符</span>
                   </li>
@@ -261,9 +261,9 @@ function SettingsPage() {
                     className={`flex items-center gap-2 text-xs ${isDifferent ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
                   >
                     {isDifferent ? (
-                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                      <Check className='h-3.5 w-3.5 shrink-0' />
                     ) : (
-                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                      <X className='h-3.5 w-3.5 shrink-0' />
                     )}
                     <span>不能与当前密码相同</span>
                   </li>
@@ -271,9 +271,9 @@ function SettingsPage() {
                     className={`flex items-center gap-2 text-xs ${isMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
                   >
                     {isMatch ? (
-                      <Check className='h-3.5 w-3.5 flex-shrink-0' />
+                      <Check className='h-3.5 w-3.5 shrink-0' />
                     ) : (
-                      <X className='h-3.5 w-3.5 flex-shrink-0' />
+                      <X className='h-3.5 w-3.5 shrink-0' />
                     )}
                     <span>两次输入的密码一致</span>
                   </li>
