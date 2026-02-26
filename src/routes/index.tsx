@@ -653,6 +653,13 @@ function TodosPage() {
                 <Monitor className='h-4 w-4' />
               </Button>
             </div>
+            <Link
+              to='/settings'
+              aria-label='打开设置'
+              className='border-border/70 bg-card/70 shadow-elevation-1 hover:bg-accent/70 text-muted-foreground hover:text-foreground inline-flex h-11 w-11 items-center justify-center rounded-2xl border backdrop-blur-sm transition-colors md:hidden'
+            >
+              <Settings className='h-4 w-4' />
+            </Link>
             <Suspense
               fallback={
                 <Button

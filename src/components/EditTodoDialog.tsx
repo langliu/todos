@@ -130,7 +130,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className='shadow-elevation-4 data-open:slide-in-from-right-full data-closed:slide-out-to-right-full data-open:zoom-in-100 data-closed:zoom-out-100 fixed top-0 right-0 left-auto z-50 flex h-dvh w-full max-w-[48rem] translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none border-l p-0 sm:rounded-l-3xl sm:rounded-r-none lg:max-w-[52rem]'>
+      <DialogContent className='shadow-elevation-4 data-open:slide-in-from-right-full data-closed:slide-out-to-right-full data-open:zoom-in-100 data-closed:zoom-out-100 fixed top-0 right-0 left-auto z-50 flex h-dvh w-full max-w-3xl translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none border-l p-0 sm:rounded-l-3xl sm:rounded-r-none lg:max-w-208'>
         <DialogHeader className='from-muted/60 border-b bg-linear-to-br to-transparent p-6 pb-4'>
           <div className='flex items-center gap-3'>
             <div className='from-primary to-secondary shadow-elevation-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br'>

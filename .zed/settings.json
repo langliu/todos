@@ -1,0 +1,53 @@
+{
+  "format_on_save": "on",
+  "languages": {
+    "TypeScript": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "TSX": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "CSS": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "JSON": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "Markdown": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    },
+    "HTML": {
+      "formatter": {
+        "external": {
+          "command": "bunx",
+          "arguments": ["oxfmt", "--stdin-filepath", "{buffer_path}"]
+        }
+      }
+    }
+  }
+}
