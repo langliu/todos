@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { Sparkles, Calendar as CalendarIcon, BellRing } from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon, BellRing, Paperclip } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 import type { Todo } from '@/lib/types'
@@ -169,6 +169,36 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
                 }
                 className='border-border bg-card shadow-elevation-1 focus:border-primary/30 focus:bg-background min-h-25 resize-none rounded-2xl border-2 px-4 py-3 transition-all'
               />
+            </div>
+
+            <div className='space-y-2'>
+              <Label className='text-foreground flex items-center gap-2 text-sm font-semibold'>
+                <Paperclip className='text-muted-foreground h-4 w-4' />
+                附件 <span className='text-muted-foreground font-normal'>（可选）</span>
+              </Label>
+              {todo.attachments.length > 0 ? (
+                <div className='flex flex-wrap gap-1.5'>
+                  {todo.attachments.map((attachment) => (
+                    <a
+                      key={attachment.storage_id}
+                      href={attachment.url ?? '#'}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='border-border/80 bg-muted/45 text-muted-foreground hover:border-primary/40 hover:text-primary inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs transition-colors'
+                      onClick={(event) => {
+                        if (!attachment.url) {
+                          event.preventDefault()
+                        }
+                      }}
+                    >
+                      <Paperclip className='h-3 w-3 shrink-0' />
+                      <span className='max-w-[240px] truncate'>{attachment.name}</span>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className='text-muted-foreground text-xs'>无附件</p>
+              )}
             </div>
 
             <div className='space-y-2'>

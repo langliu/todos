@@ -1,3 +1,11 @@
+export type TodoAttachment = {
+  storage_id: string
+  name: string
+  content_type: string | null
+  size: number
+  url: string | null
+}
+
 export type Todo = {
   id: string
   user_id: string
@@ -7,6 +15,7 @@ export type Todo = {
   important: boolean
   due_date: string | null
   reminder_minutes_before: number | null
+  attachments: TodoAttachment[]
   created_at: string
   updated_at: string
 }
@@ -17,6 +26,12 @@ export type CreateTodoInput = {
   due_date?: string
   important?: boolean
   reminder_minutes_before?: number | null
+  attachments?: Array<{
+    storage_id: string
+    name: string
+    content_type?: string | null
+    size: number
+  }>
 }
 
 export type UpdateTodoInput = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>>

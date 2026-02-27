@@ -6,6 +6,14 @@ const internalMutation = internalMutationGeneric
 
 type TodoListType = 'my-day' | 'important' | 'planned' | 'tasks'
 
+type TodoAttachmentResponse = {
+  storage_id: string
+  name: string
+  content_type: string | null
+  size: number
+  url: string | null
+}
+
 type TodoResponse = {
   id: string
   user_id: string
@@ -15,6 +23,7 @@ type TodoResponse = {
   important: boolean
   due_date: string | null
   reminder_minutes_before: number | null
+  attachments: TodoAttachmentResponse[]
   created_at: string
   updated_at: string
 }
@@ -52,18 +61,41 @@ function normalizeReminderMinutes(value: number | null | undefined): number | nu
   return Math.max(0, Math.floor(value))
 }
 
-function toTodo(todo: {
-  _id: string
-  user_id: string
-  title: string
-  description: string | null
-  completed: boolean
-  important: boolean
-  due_date: string | null
-  reminder_minutes_before: number | null
-  created_at: string
-  updated_at: string
-}): TodoResponse {
+async function toTodo(
+  ctx: any,
+  todo: {
+    _id: string
+    user_id: string
+    title: string
+    description: string | null
+    completed: boolean
+    important: boolean
+    due_date: string | null
+    reminder_minutes_before: number | null
+    attachments?: Array<{
+      storage_id: string
+      name: string
+      content_type: string | null
+      size: number
+    }>
+    created_at: string
+    updated_at: string
+  },
+): Promise<TodoResponse> {
+  const attachments = Array.isArray(todo.attachments) ? todo.attachments : []
+  const resolvedAttachments = await Promise.all(
+    attachments.map(async (attachment): Promise<TodoAttachmentResponse> => {
+      const url = await ctx.storage.getUrl(attachment.storage_id).catch(() => null)
+      return {
+        storage_id: attachment.storage_id,
+        name: attachment.name,
+        content_type: attachment.content_type ?? null,
+        size: attachment.size,
+        url,
+      }
+    }),
+  )
+
   return {
     id: todo._id,
     user_id: todo.user_id,
@@ -73,6 +105,7 @@ function toTodo(todo: {
     important: todo.important,
     due_date: todo.due_date,
     reminder_minutes_before: todo.reminder_minutes_before,
+    attachments: resolvedAttachments,
     created_at: todo.created_at,
     updated_at: todo.updated_at,
   }
@@ -354,18 +387,20 @@ async function queryTodoList(
     loadSubtaskCounts(ctx, userId, todoIds),
   ])
 
-  return results.map((todo: any) => {
-    const base = toTodo(todo)
-    const tags = tagsByTodoId.get(String(todo._id)) ?? []
-    const counts = subtaskCountsByTodoId.get(String(todo._id)) ?? { total: 0, completed: 0 }
+  return await Promise.all(
+    results.map(async (todo: any) => {
+      const base = await toTodo(ctx, todo)
+      const tags = tagsByTodoId.get(String(todo._id)) ?? []
+      const counts = subtaskCountsByTodoId.get(String(todo._id)) ?? { total: 0, completed: 0 }
 
-    return {
-      ...base,
-      tags,
-      subtask_count: counts.total,
-      subtask_completed_count: counts.completed,
-    }
-  })
+      return {
+        ...base,
+        tags,
+        subtask_count: counts.total,
+        subtask_completed_count: counts.completed,
+      }
+    }),
+  )
 }
 
 export const listTodos = internalQuery({
@@ -498,6 +533,16 @@ export const createTodo = internalMutation({
     due_date: v.optional(v.string()),
     important: v.optional(v.boolean()),
     reminder_minutes_before: v.optional(v.union(v.number(), v.null())),
+    attachments: v.optional(
+      v.array(
+        v.object({
+          storage_id: v.id('_storage'),
+          name: v.string(),
+          content_type: v.optional(v.union(v.string(), v.null())),
+          size: v.number(),
+        }),
+      ),
+    ),
     tagIds: v.optional(v.array(v.id('tags'))),
   },
   handler: async (ctx, args) => {
@@ -513,6 +558,13 @@ export const createTodo = internalMutation({
       due_date: args.due_date ?? null,
       reminder_minutes_before:
         args.due_date && reminderMinutesBefore !== undefined ? reminderMinutesBefore : null,
+      attachments:
+        args.attachments?.map((attachment) => ({
+          storage_id: attachment.storage_id,
+          name: attachment.name,
+          content_type: attachment.content_type ?? null,
+          size: attachment.size,
+        })) ?? [],
       created_at: now,
       updated_at: now,
     })
@@ -526,7 +578,7 @@ export const createTodo = internalMutation({
       throw new Error('创建任务失败')
     }
 
-    return toTodo(todo)
+    return await toTodo(ctx, todo)
   },
 })
 
@@ -573,7 +625,21 @@ export const updateTodo = internalMutation({
       throw new Error('任务不存在')
     }
 
-    return toTodo(updatedTodo)
+    return await toTodo(ctx, updatedTodo)
+  },
+})
+
+export const generateAttachmentUploadUrl = internalMutation({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId)
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+
+    return await ctx.storage.generateUploadUrl()
   },
 })
 
@@ -587,6 +653,7 @@ export const deleteTodo = internalMutation({
     if (!todo || todo.user_id !== args.userId) {
       throw new Error('任务不存在')
     }
+    const attachments = Array.isArray(todo.attachments) ? todo.attachments : []
 
     const [mappings, subtasks] = await Promise.all([
       ctx.db
@@ -606,6 +673,9 @@ export const deleteTodo = internalMutation({
       ...subtasks
         .filter((subtask: any) => subtask.user_id === args.userId)
         .map((subtask: any) => ctx.db.delete(subtask._id)),
+      ...attachments.map((attachment: any) =>
+        ctx.storage.delete(attachment.storage_id).catch(() => undefined),
+      ),
     ])
 
     await ctx.db.delete(args.id)

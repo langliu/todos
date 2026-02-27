@@ -26,6 +26,16 @@ export default defineSchema({
     important: v.boolean(),
     due_date: v.union(v.string(), v.null()),
     reminder_minutes_before: v.union(v.number(), v.null()),
+    attachments: v.optional(
+      v.array(
+        v.object({
+          storage_id: v.id('_storage'),
+          name: v.string(),
+          content_type: v.union(v.string(), v.null()),
+          size: v.number(),
+        }),
+      ),
+    ),
     created_at: v.string(),
     updated_at: v.string(),
   })

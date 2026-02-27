@@ -11,7 +11,15 @@ export type CreateTodoInput = {
   due_date?: string
   important?: boolean
   reminder_minutes_before?: number | null
+  attachments?: TodoAttachmentInput[]
   tagIds?: string[]
+}
+
+export type TodoAttachmentInput = {
+  storage_id: string
+  name: string
+  content_type?: string | null
+  size: number
 }
 
 export type UpdateTodoInput = {
@@ -188,7 +196,18 @@ export const createTodo = createServerFn({ method: 'POST' })
       due_date: data.due_date,
       reminder_minutes_before:
         data.due_date && reminderMinutesBefore !== undefined ? reminderMinutesBefore : null,
+      attachments: data.attachments,
       tagIds: data.tagIds,
+    })
+  })
+
+export const generateTodoAttachmentUploadUrl = createServerFn({ method: 'POST' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<string> => {
+    const { userId } = context as AuthContext
+
+    return await convexMutation<string>('todos:generateAttachmentUploadUrl', {
+      userId,
     })
   })
 

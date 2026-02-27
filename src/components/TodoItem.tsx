@@ -4,6 +4,7 @@ import {
   Trash2,
   Calendar,
   BellRing,
+  Paperclip,
   GripVertical,
   Pencil,
   ChevronDown,
@@ -133,6 +134,27 @@ export function TodoItem({
               <div className='mt-2 flex flex-wrap gap-1.5'>
                 {tags.map((tag) => (
                   <TagBadge key={tag.id} tag={tag} />
+                ))}
+              </div>
+            )}
+            {todo.attachments.length > 0 && (
+              <div className='mt-2 flex flex-wrap gap-1.5'>
+                {todo.attachments.map((attachment) => (
+                  <a
+                    key={attachment.storage_id}
+                    href={attachment.url ?? '#'}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='border-border/80 bg-muted/45 text-muted-foreground hover:border-primary/40 hover:text-primary inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs transition-colors'
+                    onClick={(event) => {
+                      if (!attachment.url) {
+                        event.preventDefault()
+                      }
+                    }}
+                  >
+                    <Paperclip className='h-3 w-3 shrink-0' />
+                    <span className='max-w-[180px] truncate'>{attachment.name}</span>
+                  </a>
                 ))}
               </div>
             )}
