@@ -265,11 +265,11 @@ function matchesTodoList(
     case 'my-day':
       return !todo.completed
     case 'important':
-      return todo.important
+      return !todo.completed && todo.important
     case 'planned':
-      return Boolean(todo.due_date)
+      return !todo.completed && Boolean(todo.due_date)
     case 'tasks':
-      return true
+      return !todo.completed
     default:
       return true
   }
@@ -288,15 +288,15 @@ async function calculateTodoCounts(
     .query('todos')
     .withIndex('by_user_id_created_at', (q: any) => q.eq('user_id', userId))
     .order('desc')) {
-    tasks += 1
     if (!todo.completed) {
+      tasks += 1
       myDay += 1
-    }
-    if (todo.important) {
-      important += 1
-    }
-    if (todo.due_date) {
-      planned += 1
+      if (todo.important) {
+        important += 1
+      }
+      if (todo.due_date) {
+        planned += 1
+      }
     }
   }
 

@@ -177,8 +177,7 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
     },
   })
 
-  const handleAddSubtask = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAddSubtask = () => {
     if (readOnly) return
     if (!newSubtaskTitle.trim()) return
 
@@ -300,21 +299,28 @@ export function SubtaskList({ todoId, subtasks, readOnly = false }: SubtaskListP
       </DndContext>
 
       {!readOnly && (
-        <form onSubmit={handleAddSubtask} className='flex gap-2'>
+        <div className='flex gap-2'>
           <Input
             placeholder='添加子任务...'
             value={newSubtaskTitle}
             onChange={(e) => setNewSubtaskTitle(e.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                handleAddSubtask()
+              }
+            }}
             className='border-border bg-card focus:border-primary/30 h-10 flex-1 rounded-xl border-2 px-4 text-sm'
           />
           <Button
-            type='submit'
+            type='button'
             disabled={!newSubtaskTitle.trim()}
+            onClick={handleAddSubtask}
             className='h-10 gap-2 rounded-xl px-4'
           >
             <Plus className='h-4 w-4' />
           </Button>
-        </form>
+        </div>
       )}
     </div>
   )

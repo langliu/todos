@@ -14,6 +14,16 @@ import { lazy, Suspense, useState } from 'react'
 
 import type { Tag, Todo } from '@/lib/types'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { getSubtasks } from '@/data/subtasks'
@@ -56,6 +66,7 @@ export function TodoItem({
   onEdit,
 }: TodoItemProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const overdue = todo.due_date ? isOverdue(todo.due_date) : false
   const { data: loadedSubtasks } = useQuery({
     queryKey: ['subtasks', todo.id],
@@ -226,9 +237,10 @@ export function TodoItem({
               variant='ghost'
               size='icon'
               className='text-muted-foreground hover:bg-destructive/15 hover:text-destructive focus-visible:ring-destructive/70 h-9 w-9 rounded-xl transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none'
+              aria-label={`删除任务 ${todo.title}`}
               onClick={(e) => {
                 e.stopPropagation()
-                onDelete(todo.id)
+                setIsDeleteDialogOpen(true)
               }}
             >
               <Trash2 className='h-4 w-4' />
@@ -236,6 +248,28 @@ export function TodoItem({
           </div>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className='rounded-2xl'>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除任务</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要删除“{todo.title}”吗？删除后将无法恢复。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className='rounded-xl'>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive hover:bg-destructive/90 rounded-xl'
+              onClick={() => {
+                onDelete(todo.id)
+              }}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isExpanded && (
         <div className='border-border/65 border-t px-4 pt-2 pb-3 sm:px-5'>

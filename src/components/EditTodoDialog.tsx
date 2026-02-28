@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { Sparkles, Calendar as CalendarIcon, BellRing, Paperclip } from 'lucide-react'
+import { Sparkles, Calendar as CalendarIcon, BellRing, Paperclip, CheckSquare } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 import type { Todo } from '@/lib/types'
@@ -19,10 +19,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
+import { getSubtasks } from '@/data/subtasks'
 import { getTags, createTag, getTodoTags } from '@/data/tags'
 import { TODO_REMINDER_OPTIONS } from '@/lib/todo-reminder'
 import { cn } from '@/lib/utils'
 
+import { SubtaskList } from './SubtaskList'
 import { TagSelector } from './TagSelector'
 
 interface EditTodoDialogProps {
@@ -50,6 +52,7 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [subtasksOpen, setSubtasksOpen] = useState(false)
 
   const { data: tags = [] } = useQuery({
     queryKey: ['tags'],
@@ -59,6 +62,12 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
   const { data: todoTags = [] } = useQuery({
     queryKey: ['todoTags', todo.id],
     queryFn: () => getTodoTags({ data: { todoId: todo.id } }),
+    enabled: open,
+  })
+
+  const { data: subtasks = [] } = useQuery({
+    queryKey: ['subtasks', todo.id],
+    queryFn: () => getSubtasks({ data: { todoId: todo.id } }),
     enabled: open,
   })
 
@@ -326,6 +335,47 @@ export function EditTodoDialog({ todo, open, onOpenChange, onUpdate }: EditTodoD
               onToggleTag={handleToggleTag}
               onCreateTag={handleCreateTag}
             />
+
+            <div className='space-y-3'>
+              <button
+                type='button'
+                onClick={() => setSubtasksOpen(!subtasksOpen)}
+                className='border-border/60 bg-card/50 hover:bg-card flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors'
+              >
+                <div className='flex items-center gap-3'>
+                  <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-xl'>
+                    <CheckSquare className='text-primary h-5 w-5' />
+                  </div>
+                  <div>
+                    <p className='font-medium'>子任务</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {subtasks.length > 0
+                        ? `${subtasks.filter((s) => s.completed).length}/${subtasks.length} 已完成`
+                        : '添加子任务来分解工作'}
+                    </p>
+                  </div>
+                </div>
+                <svg
+                  className={`text-muted-foreground h-5 w-5 transition-transform ${subtasksOpen ? 'rotate-180' : ''}`}
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M19 9l-7 7-7-7'
+                  />
+                </svg>
+              </button>
+
+              {subtasksOpen && (
+                <div className='border-border/60 bg-card/50 rounded-xl border p-4'>
+                  <SubtaskList todoId={todo.id} subtasks={subtasks} />
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className='border-border bg-background gap-3 border-t px-6 py-4'>

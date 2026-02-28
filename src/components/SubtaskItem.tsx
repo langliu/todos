@@ -46,6 +46,7 @@ export function SubtaskItem({
       className='bg-muted/30 group hover:bg-muted/50 flex items-center gap-3 rounded-xl p-3 transition-all'
     >
       <button
+        type='button'
         {...attributes}
         {...listeners}
         className='text-muted-foreground hover:text-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100'
@@ -76,6 +77,7 @@ export function SubtaskItem({
             autoFocus
           />
           <Button
+            type='button'
             size='icon'
             variant='ghost'
             onClick={onEditSave}
@@ -100,6 +102,7 @@ export function SubtaskItem({
       )}
 
       <Button
+        type='button'
         variant='ghost'
         size='icon'
         onClick={() => onDelete(subtask.id)}

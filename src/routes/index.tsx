@@ -294,6 +294,9 @@ function TodosPage() {
       void queryClient.invalidateQueries({ queryKey: ['todo-list-counts'] })
       void queryClient.invalidateQueries({ queryKey: remindersQueryKey })
     },
+    onError: () => {
+      toast.error('删除任务失败，请稍后重试')
+    },
   })
 
   const signOutMutation = useMutation({
